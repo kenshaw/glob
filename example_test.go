@@ -1,77 +1,137 @@
 package glob_test
 
 import (
+	"fmt"
+
 	"github.com/kenshaw/glob"
 )
 
-func main() {
+func Example() {
 	// create simple glob
-	g := glob.MustCompile("*.github.com")
-	g.Match("api.github.com") // true
+	g1 := glob.MustCompile("*.github.com")
+	fmt.Println(g1)
+	fmt.Println(g1.Match("api.github.com")) // true
 
 	// quote meta characters and then create simple glob
-	g = glob.MustCompile(glob.QuoteMeta("*.github.com"))
-	g.Match("*.github.com") // true
+	g2 := glob.MustCompile(glob.QuoteMeta("*.github.com"))
+	fmt.Println(g2)
+	fmt.Println(g2.Match("*.github.com")) // true
 
 	// create new glob with set of delimiters as ["."]
-	g = glob.MustCompile("api.*.com", '.')
-	g.Match("api.github.com") // true
-	g.Match("api.gi.hub.com") // false
+	g3 := glob.MustCompile("api.*.com", '.')
+	fmt.Println(g3)
+	fmt.Println(g3.Match("api.github.com")) // true
+	fmt.Println(g3.Match("api.gi.hub.com")) // false
 
 	// create new glob with set of delimiters as ["."]
 	// but now with super wildcard
-	g = glob.MustCompile("api.**.com", '.')
-	g.Match("api.github.com") // true
-	g.Match("api.gi.hub.com") // true
+	g4 := glob.MustCompile("api.**.com", '.')
+	fmt.Println(g4)
+	fmt.Println(g4.Match("api.github.com")) // true
+	fmt.Println(g4.Match("api.gi.hub.com")) // true
 
 	// create glob with single symbol wildcard
-	g = glob.MustCompile("?at")
-	g.Match("cat") // true
-	g.Match("fat") // true
-	g.Match("at")  // false
+	g5 := glob.MustCompile("?at")
+	fmt.Println(g5)
+	fmt.Println(g5.Match("cat")) // true
+	fmt.Println(g5.Match("fat")) // true
+	fmt.Println(g5.Match("at"))  // false
 
 	// create glob with single symbol wildcard and delimiters ['f']
-	g = glob.MustCompile("?at", 'f')
-	g.Match("cat") // true
-	g.Match("fat") // false
-	g.Match("at")  // false
+	g6 := glob.MustCompile("?at", 'f')
+	fmt.Println(g6)
+	fmt.Println(g6.Match("cat")) // true
+	fmt.Println(g6.Match("fat")) // false
+	fmt.Println(g6.Match("at"))  // false
 
 	// create glob with character-list matchers
-	g = glob.MustCompile("[abc]at")
-	g.Match("cat") // true
-	g.Match("bat") // true
-	g.Match("fat") // false
-	g.Match("at")  // false
+	g7 := glob.MustCompile("[abc]at")
+	fmt.Println(g7)
+	fmt.Println(g7.Match("cat")) // true
+	fmt.Println(g7.Match("bat")) // true
+	fmt.Println(g7.Match("fat")) // false
+	fmt.Println(g7.Match("at"))  // false
 
 	// create glob with character-list matchers
-	g = glob.MustCompile("[!abc]at")
-	g.Match("cat") // false
-	g.Match("bat") // false
-	g.Match("fat") // true
-	g.Match("at")  // false
+	g8 := glob.MustCompile("[!abc]at")
+	fmt.Println(g8)
+	fmt.Println(g8.Match("cat")) // false
+	fmt.Println(g8.Match("bat")) // false
+	fmt.Println(g8.Match("fat")) // true
+	fmt.Println(g8.Match("at"))  // false
 
 	// create glob with character-range matchers
-	g = glob.MustCompile("[a-c]at")
-	g.Match("cat") // true
-	g.Match("bat") // true
-	g.Match("fat") // false
-	g.Match("at")  // false
+	g9 := glob.MustCompile("[a-c]at")
+	fmt.Println(g9)
+	fmt.Println(g9.Match("cat")) // true
+	fmt.Println(g9.Match("bat")) // true
+	fmt.Println(g9.Match("fat")) // false
+	fmt.Println(g9.Match("at"))  // false
 
 	// create glob with character-range matchers
-	g = glob.MustCompile("[!a-c]at")
-	g.Match("cat") // false
-	g.Match("bat") // false
-	g.Match("fat") // true
-	g.Match("at")  // false
+	g10 := glob.MustCompile("[!a-c]at")
+	fmt.Println(g10)
+	fmt.Println(g10.Match("cat")) // false
+	fmt.Println(g10.Match("bat")) // false
+	fmt.Println(g10.Match("fat")) // true
+	fmt.Println(g10.Match("at"))  // false
 
 	// create glob with pattern-alternatives list
-	g = glob.MustCompile("{cat,bat,[fr]at}")
-	g.Match("cat")  // true
-	g.Match("bat")  // true
-	g.Match("fat")  // true
-	g.Match("rat")  // true
-	g.Match("at")   // false
-	g.Match("zat")  // false
-	g.Match("frat") // false
+	g11 := glob.MustCompile("{cat,bat,[fr]at}")
+	fmt.Println(g11)
+	fmt.Println(g11.Match("cat"))  // true
+	fmt.Println(g11.Match("bat"))  // true
+	fmt.Println(g11.Match("fat"))  // true
+	fmt.Println(g11.Match("rat"))  // true
+	fmt.Println(g11.Match("at"))   // false
+	fmt.Println(g11.Match("zat"))  // false
+	fmt.Println(g11.Match("frat")) // false
+
 	// Output:
+	// <suffix:.github.com>
+	// true
+	// <text:`*.github.com`>
+	// true
+	// <btree:[<nothing><-<text:`api.`>-><btree:[<any:![.]><-<text:`.com`>-><nothing>]>]>
+	// true
+	// false
+	// <prefix_suffix:[api.,.com]>
+	// true
+	// true
+	// <row_3:[<single> <text:`at`>]>
+	// true
+	// true
+	// false
+	// <row_3:[<single:![f]> <text:`at`>]>
+	// true
+	// false
+	// false
+	// <row_3:[<list:[abc]> <text:`at`>]>
+	// true
+	// true
+	// false
+	// false
+	// <row_3:[<list:![abc]> <text:`at`>]>
+	// false
+	// false
+	// true
+	// false
+	// <row_3:[<range:[a,c]> <text:`at`>]>
+	// true
+	// true
+	// false
+	// false
+	// <row_3:[<range:![a,c]> <text:`at`>]>
+	// false
+	// false
+	// true
+	// false
+	// <indexed_any_of:[[<text:`cat`> <text:`bat`> <row_3:[<list:[fr]> <text:`at`>]>]]>
+	// true
+	// true
+	// true
+	// true
+	// false
+	// false
+	// false
 }

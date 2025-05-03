@@ -181,7 +181,7 @@ func glueMatchersAsEvery(ms []Matcher) Matcher {
 		hasAny    bool
 		hasSuper  bool
 		hasSingle bool
-		min       int
+		minimum   int
 		separator []rune
 	)
 	for i, matcher := range ms {
@@ -196,14 +196,14 @@ func glueMatchersAsEvery(ms []Matcher) Matcher {
 		case Single:
 			sep = m.sep
 			hasSingle = true
-			min++
+			minimum++
 		case List:
 			if !m.not {
 				return nil
 			}
 			sep = m.rs
 			hasSingle = true
-			min++
+			minimum++
 		default:
 			return nil
 		}
@@ -222,14 +222,14 @@ func glueMatchersAsEvery(ms []Matcher) Matcher {
 	if hasAny && !hasSuper && !hasSingle {
 		return NewAny(separator)
 	}
-	if (hasAny || hasSuper) && min > 0 && len(separator) == 0 {
-		return NewMin(min)
+	if (hasAny || hasSuper) && minimum > 0 && len(separator) == 0 {
+		return NewMin(minimum)
 	}
 	var every []Matcher
-	if min > 0 {
-		every = append(every, NewMin(min))
+	if minimum > 0 {
+		every = append(every, NewMin(minimum))
 		if !hasAny && !hasSuper {
-			every = append(every, NewMax(min))
+			every = append(every, NewMax(minimum))
 		}
 	}
 	if len(separator) > 0 {

@@ -1,3 +1,20 @@
 version: "2"
 linters:
   default: all
+  disable:
+    - cyclop
+    - depguard
+    - err113
+    - errcheck
+    - paralleltest
+    - varnamelen
+    - wrapcheck
+    - wsl
+    - exhaustruct
+    - forcetypeassert
+    - funlen
+    - inamedparam
+    - ireturn
+    - mnd
+    - nlreturn
+    - testpackage
