@@ -51,12 +51,10 @@ type IndexedEveryOf struct {
 func (e IndexedEveryOf) Index(s string) (int, []int) {
 	var index int
 	var offset int
-
 	// make `in` with cap as len(s),
 	// cause it is the maximum size of output segments values
 	next := acquireSegments(len(s))
 	current := acquireSegments(len(s))
-
 	sub := s
 	for i, m := range e.ms {
 		idx, seg := m.Index(sub)
@@ -65,7 +63,6 @@ func (e IndexedEveryOf) Index(s string) (int, []int) {
 			releaseSegments(current)
 			return -1, nil
 		}
-
 		if i == 0 {
 			// we use copy here instead of `current = seg`
 			// cause seg is a slice from reusable buffer `in`
@@ -74,7 +71,6 @@ func (e IndexedEveryOf) Index(s string) (int, []int) {
 		} else {
 			// clear the next
 			next = next[:0]
-
 			delta := index - (idx + offset)
 			for _, ex := range current {
 				for _, n := range seg {
@@ -83,23 +79,18 @@ func (e IndexedEveryOf) Index(s string) (int, []int) {
 					}
 				}
 			}
-
 			if len(next) == 0 {
 				releaseSegments(next)
 				releaseSegments(current)
 				return -1, nil
 			}
-
 			current = append(current[:0], next...)
 		}
-
 		index = idx + offset
 		sub = s[index:]
 		offset += idx
 	}
-
 	releaseSegments(next)
-
 	return index, current
 }
 

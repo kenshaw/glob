@@ -9,8 +9,8 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/gobwas/glob"
-	"github.com/gobwas/glob/match"
+	"github.com/kenshaw/glob"
+	"github.com/kenshaw/glob/match"
 )
 
 func main() {
@@ -22,7 +22,6 @@ func main() {
 		offset   = flag.Int("offset", 0, "patterns to skip")
 	)
 	flag.Parse()
-
 	var patterns []string
 	if *pattern != "" {
 		patterns = append(patterns, *pattern)
@@ -48,10 +47,9 @@ func main() {
 	if len(patterns) == 0 {
 		return
 	}
-
 	var separators []rune
 	if len(*sep) > 0 {
-		for _, c := range strings.Split(*sep, ",") {
+		for c := range strings.SplitSeq(*sep, ",") {
 			r, w := utf8.DecodeRuneInString(c)
 			if len(c) > w {
 				fmt.Printf("only single charactered separators are allowed: %+q\n", c)
@@ -60,7 +58,6 @@ func main() {
 			separators = append(separators, r)
 		}
 	}
-
 	br := bufio.NewReader(os.Stdin)
 	for _, p := range patterns {
 		g, err := glob.Compile(p, separators...)

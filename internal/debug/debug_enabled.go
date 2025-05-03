@@ -1,3 +1,4 @@
+//go:build globdebug
 // +build globdebug
 
 package debug

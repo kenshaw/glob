@@ -38,8 +38,7 @@ func TestSuffixIndex(t *testing.T) {
 
 func BenchmarkIndexSuffix(b *testing.B) {
 	m := NewSuffix("qwe")
-
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_, s := m.Index(bench_pattern)
 		releaseSegments(s)
 	}
@@ -47,7 +46,6 @@ func BenchmarkIndexSuffix(b *testing.B) {
 
 func BenchmarkIndexSuffixParallel(b *testing.B) {
 	m := NewSuffix("qwe")
-
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
 			_, s := m.Index(bench_pattern)

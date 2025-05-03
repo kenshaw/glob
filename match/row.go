@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"unicode/utf8"
 
-	"github.com/gobwas/glob/internal/debug"
-	"github.com/gobwas/glob/util/runes"
+	"github.com/kenshaw/glob/internal/debug"
+	"github.com/kenshaw/glob/util/runes"
 )
 
 type Row struct {
@@ -51,7 +51,6 @@ func (r Row) Index(s string) (index int, segments []int) {
 		debug.Logf("row: %d vs %d", len(s), r.runes)
 		defer func() { done(index, segments) }()
 	}
-
 	for j := 0; j <= len(s)-r.runes; { // NOTE: using len() here to avoid counting runes.
 		i, _ := r.ms[0].Index(s[j:])
 		if i == -1 {

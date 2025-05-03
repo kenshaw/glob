@@ -5,7 +5,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/gobwas/glob/util/runes"
+	"github.com/kenshaw/glob/util/runes"
 )
 
 type SuffixAny struct {
@@ -23,9 +23,7 @@ func (s SuffixAny) Index(v string) (int, []int) {
 	if idx == -1 {
 		return -1, nil
 	}
-
 	i := runes.LastIndexAnyRune(v[:idx], s.sep) + 1
-
 	return i, []int{idx + len(s.s) - i}
 }
 

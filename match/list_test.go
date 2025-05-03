@@ -41,15 +41,13 @@ func TestListIndex(t *testing.T) {
 
 func BenchmarkIndexList(b *testing.B) {
 	m := NewList([]rune("def"), false)
-
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		m.Index(bench_pattern)
 	}
 }
 
 func BenchmarkIndexListParallel(b *testing.B) {
 	m := NewList([]rune("def"), false)
-
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
 			m.Index(bench_pattern)

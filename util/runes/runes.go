@@ -1,6 +1,7 @@
 package runes
 
 import (
+	"slices"
 	"strings"
 	"unicode/utf8"
 )
@@ -66,7 +67,6 @@ func IndexAnyRune(s string, rs []rune) int {
 			return i
 		}
 	}
-
 	return -1
 }
 
@@ -95,7 +95,6 @@ func LastIndexAnyRune(s string, rs []rune) int {
 
 func Index(s, needle []rune) int {
 	ls, ln := len(s), len(needle)
-
 	switch {
 	case ln == 0:
 		return 0
@@ -109,24 +108,20 @@ func Index(s, needle []rune) int {
 	case ln > ls:
 		return -1
 	}
-
 head:
 	for i := 0; i < ls && ls-i >= ln; i++ {
-		for y := 0; y < ln; y++ {
+		for y := range ln {
 			if s[i+y] != needle[y] {
 				continue head
 			}
 		}
-
 		return i
 	}
-
 	return -1
 }
 
 func LastIndex(s, needle []rune) int {
 	ls, ln := len(s), len(needle)
-
 	switch {
 	case ln == 0:
 		if ls == 0 {
@@ -143,7 +138,6 @@ func LastIndex(s, needle []rune) int {
 	case ln > ls:
 		return -1
 	}
-
 head:
 	for i := ls - 1; i >= 0 && i >= ln; i-- {
 		for y := ln - 1; y >= 0; y-- {
@@ -151,10 +145,8 @@ head:
 				continue head
 			}
 		}
-
 		return i - ln + 1
 	}
-
 	return -1
 }
 
@@ -163,10 +155,8 @@ head:
 func IndexAny(s, chars []rune) int {
 	if len(chars) > 0 {
 		for i, c := range s {
-			for _, m := range chars {
-				if c == m {
-					return i
-				}
+			if slices.Contains(chars, c) {
+				return i
 			}
 		}
 	}
@@ -183,7 +173,6 @@ func Max(s []rune) (max rune) {
 			max = r
 		}
 	}
-
 	return
 }
 
@@ -194,12 +183,10 @@ func Min(s []rune) rune {
 			min = r
 			continue
 		}
-
 		if r < min {
 			min = r
 		}
 	}
-
 	return min
 }
 
@@ -218,22 +205,19 @@ func IndexLastRune(s []rune, r rune) int {
 			return i
 		}
 	}
-
 	return -1
 }
 
 func Equal(a, b []rune) bool {
 	// TODO use bytes.Equal with unsafe.
 	if len(a) == len(b) {
-		for i := 0; i < len(a); i++ {
+		for i := range a {
 			if a[i] != b[i] {
 				return false
 			}
 		}
-
 		return true
 	}
-
 	return false
 }
 

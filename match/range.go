@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"unicode/utf8"
 
-	"github.com/gobwas/glob/internal/debug"
+	"github.com/kenshaw/glob/internal/debug"
 )
 
 type Range struct {
@@ -33,9 +33,7 @@ func (self Range) Match(s string) (ok bool) {
 	if len(s) > w {
 		return false
 	}
-
 	inRange := r >= self.Lo && r <= self.Hi
-
 	return inRange == !self.Not
 }
 
@@ -49,7 +47,6 @@ func (self Range) Index(s string) (index int, segments []int) {
 			return i, segmentsByRuneLength[utf8.RuneLen(r)]
 		}
 	}
-
 	return -1, nil
 }
 

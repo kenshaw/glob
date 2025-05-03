@@ -3,7 +3,7 @@ package match
 import (
 	"fmt"
 
-	"github.com/gobwas/glob/internal/debug"
+	"github.com/kenshaw/glob/internal/debug"
 )
 
 type AnyOf struct {

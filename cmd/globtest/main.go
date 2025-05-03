@@ -8,7 +8,7 @@ import (
 	"testing"
 	"unicode/utf8"
 
-	"github.com/gobwas/glob"
+	"github.com/kenshaw/glob"
 )
 
 func benchString(r testing.BenchmarkResult) string {
@@ -25,10 +25,8 @@ func benchString(r testing.BenchmarkResult) string {
 				ns = fmt.Sprintf("%12.1f ns/op", float64(r.T.Nanoseconds())/float64(r.N))
 			}
 		}
-
 		allocs = fmt.Sprintf("%d", r.MemAllocs/uint64(r.N))
 	}
-
 	return fmt.Sprintf("%8d\t%s\t%s allocs", r.N, ns, allocs)
 }
 
@@ -38,14 +36,12 @@ func main() {
 	fixture := flag.String("f", "", "fixture")
 	verbose := flag.Bool("v", false, "verbose")
 	flag.Parse()
-
 	if *pattern == "" {
 		flag.Usage()
 		os.Exit(1)
 	}
-
 	var separators []rune
-	for _, c := range strings.Split(*sep, ",") {
+	for c := range strings.SplitSeq(*sep, ",") {
 		if r, w := utf8.DecodeRuneInString(c); len(c) > w {
 			fmt.Println("only single charactered separators are allowed")
 			os.Exit(1)
@@ -53,29 +49,24 @@ func main() {
 			separators = append(separators, r)
 		}
 	}
-
 	g, err := glob.Compile(*pattern, separators...)
 	if err != nil {
 		fmt.Println("could not compile pattern:", err)
 		os.Exit(1)
 	}
-
 	if !*verbose {
 		fmt.Println(g.Match(*fixture))
 		return
 	}
-
 	fmt.Printf("result: %t\n", g.Match(*fixture))
-
 	cb := testing.Benchmark(func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
+		for b.Loop() {
 			glob.Compile(*pattern, separators...)
 		}
 	})
 	fmt.Println("compile:", benchString(cb))
-
 	mb := testing.Benchmark(func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
+		for b.Loop() {
 			g.Match(*fixture)
 		}
 	})

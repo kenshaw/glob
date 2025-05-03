@@ -50,7 +50,7 @@ func BenchmarkRowIndex(b *testing.B) {
 		NewText("def"),
 		NewSingle(nil),
 	})
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_, s := m.Index(bench_pattern)
 		releaseSegments(s)
 	}

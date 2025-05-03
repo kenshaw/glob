@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"unicode/utf8"
 
-	"github.com/gobwas/glob/util/runes"
+	"github.com/kenshaw/glob/util/runes"
 )
 
 // single represents ?

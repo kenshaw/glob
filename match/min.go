@@ -26,7 +26,6 @@ func (m Min) Match(s string) bool {
 
 func (m Min) Index(s string) (int, []int) {
 	var count int
-
 	c := len(s) - m.n + 1
 	if c <= 0 {
 		return -1, nil

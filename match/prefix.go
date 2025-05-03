@@ -23,7 +23,6 @@ func (p Prefix) Index(s string) (int, []int) {
 	if idx == -1 {
 		return -1, nil
 	}
-
 	length := len(p.s)
 	var sub string
 	if len(s) > idx+length {
@@ -31,13 +30,11 @@ func (p Prefix) Index(s string) (int, []int) {
 	} else {
 		sub = ""
 	}
-
 	segments := acquireSegments(len(sub) + 1)
 	segments = append(segments, length)
 	for i, r := range sub {
 		segments = append(segments, length+i+utf8.RuneLen(r))
 	}
-
 	return idx, segments
 }
 

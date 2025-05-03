@@ -35,8 +35,7 @@ func TestNothingIndex(t *testing.T) {
 
 func BenchmarkIndexNothing(b *testing.B) {
 	m := NewNothing()
-
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_, s := m.Index(bench_pattern)
 		releaseSegments(s)
 	}
@@ -44,7 +43,6 @@ func BenchmarkIndexNothing(b *testing.B) {
 
 func BenchmarkIndexNothingParallel(b *testing.B) {
 	m := NewNothing()
-
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
 			_, s := m.Index(bench_pattern)

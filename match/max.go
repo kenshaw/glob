@@ -35,7 +35,6 @@ func (m Max) Index(s string) (int, []int) {
 		}
 		segments = append(segments, i+utf8.RuneLen(r))
 	}
-
 	return 0, segments
 }
 

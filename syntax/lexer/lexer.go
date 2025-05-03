@@ -3,8 +3,9 @@ package lexer
 import (
 	"bytes"
 	"fmt"
-	"github.com/gobwas/glob/util/runes"
 	"unicode/utf8"
+
+	"github.com/kenshaw/glob/util/runes"
 )
 
 const (
@@ -54,13 +55,11 @@ func (i *tokens) empty() bool {
 var eof rune = 0
 
 type lexer struct {
-	data string
-	pos  int
-	err  error
-
-	tokens     tokens
-	termsLevel int
-
+	data         string
+	pos          int
+	err          error
+	tokens       tokens
+	termsLevel   int
 	lastRune     rune
 	lastRuneSize int
 	hasRune      bool
@@ -81,7 +80,6 @@ func (l *lexer) Next() Token {
 	if !l.tokens.empty() {
 		return l.tokens.shift()
 	}
-
 	l.fetchItem()
 	return l.Next()
 }
@@ -90,14 +88,12 @@ func (l *lexer) peek() (r rune, w int) {
 	if l.pos == len(l.data) {
 		return eof, 0
 	}
-
 	r, w = utf8.DecodeRuneInString(l.data[l.pos:])
 	if r == utf8.RuneError {
 		l.errorf("could not read rune")
 		r = eof
 		w = 0
 	}
-
 	return
 }
 
@@ -107,13 +103,10 @@ func (l *lexer) read() rune {
 		l.seek(l.lastRuneSize)
 		return l.lastRune
 	}
-
 	r, s := l.peek()
 	l.seek(s)
-
 	l.lastRune = r
 	l.lastRuneSize = s
-
 	return r
 }
 
@@ -130,7 +123,7 @@ func (l *lexer) unread() {
 	l.hasRune = true
 }
 
-func (l *lexer) errorf(f string, v ...interface{}) {
+func (l *lexer) errorf(f string, v ...any) {
 	l.err = fmt.Errorf(f, v...)
 }
 
@@ -146,33 +139,29 @@ func (l *lexer) termsLeave() {
 	l.termsLevel--
 }
 
-var inTextBreakers = []rune{char_single, char_any, char_range_open, char_terms_open}
-var inTermsBreakers = append(inTextBreakers, char_terms_close, char_comma)
+var (
+	inTextBreakers  = []rune{char_single, char_any, char_range_open, char_terms_open}
+	inTermsBreakers = append(inTextBreakers, char_terms_close, char_comma)
+)
 
 func (l *lexer) fetchItem() {
 	r := l.read()
 	switch {
 	case r == eof:
 		l.tokens.push(Token{EOF, ""})
-
 	case r == char_terms_open:
 		l.termsEnter()
 		l.tokens.push(Token{TermsOpen, string(r)})
-
 	case r == char_comma && l.inTerms():
 		l.tokens.push(Token{Separator, string(r)})
-
 	case r == char_terms_close && l.inTerms():
 		l.tokens.push(Token{TermsClose, string(r)})
 		l.termsLeave()
-
 	case r == char_range_open:
 		l.tokens.push(Token{RangeOpen, string(r)})
 		l.fetchRange()
-
 	case r == char_single:
 		l.tokens.push(Token{Single, string(r)})
-
 	case r == char_any:
 		if l.read() == char_any {
 			l.tokens.push(Token{Super, string(r) + string(r)})
@@ -180,10 +169,8 @@ func (l *lexer) fetchItem() {
 			l.unread()
 			l.tokens.push(Token{Any, string(r)})
 		}
-
 	default:
 		l.unread()
-
 		var breakers []rune
 		if l.inTerms() {
 			breakers = inTermsBreakers
@@ -204,7 +191,6 @@ func (l *lexer) fetchRange() {
 			l.errorf("unexpected end of input")
 			return
 		}
-
 		if wantClose {
 			if r != char_range_close {
 				l.errorf("expected close range character")
@@ -213,19 +199,16 @@ func (l *lexer) fetchRange() {
 			}
 			return
 		}
-
 		if wantHi {
 			l.tokens.push(Token{RangeHi, string(r)})
 			wantClose = true
 			continue
 		}
-
 		if !seenNot && r == char_range_not {
 			l.tokens.push(Token{Not, string(r)})
 			seenNot = true
 			continue
 		}
-
 		if n, w := l.peek(); n == char_range_between {
 			l.seek(w)
 			l.tokens.push(Token{RangeLo, string(r)})
@@ -233,7 +216,6 @@ func (l *lexer) fetchRange() {
 			wantHi = true
 			continue
 		}
-
 		l.unread() // unread first peek and fetch as text
 		l.fetchText([]rune{char_range_close})
 		wantClose = true
@@ -243,30 +225,25 @@ func (l *lexer) fetchRange() {
 func (l *lexer) fetchText(breakers []rune) {
 	var data []rune
 	var escaped bool
-
 reading:
 	for {
 		r := l.read()
 		if r == eof {
 			break
 		}
-
 		if !escaped {
 			if r == char_escape {
 				escaped = true
 				continue
 			}
-
 			if runes.IndexRune(breakers, r) != -1 {
 				l.unread()
 				break reading
 			}
 		}
-
 		escaped = false
 		data = append(data, r)
 	}
-
 	if len(data) > 0 {
 		l.tokens.push(Token{Text, string(data)})
 	}

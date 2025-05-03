@@ -3,8 +3,8 @@ package match
 import (
 	"fmt"
 
-	"github.com/gobwas/glob/internal/debug"
-	"github.com/gobwas/glob/util/runes"
+	"github.com/kenshaw/glob/internal/debug"
+	"github.com/kenshaw/glob/util/runes"
 )
 
 func Optimize(m Matcher) (opt Matcher) {
@@ -23,22 +23,18 @@ func Optimize(m Matcher) (opt Matcher) {
 		if len(v.sep) == 0 {
 			return NewSuper()
 		}
-
 	case List:
 		if v.not == false && len(v.rs) == 1 {
 			return NewText(string(v.rs))
 		}
 		return m
-
 	case Tree:
 		v.left = Optimize(v.left)
 		v.right = Optimize(v.right)
-
 		txt, ok := v.value.(Text)
 		if !ok {
 			return m
 		}
-
 		var (
 			leftNil  = v.left == nil || v.left == Nothing{}
 			rightNil = v.right == nil || v.right == Nothing{}
@@ -46,38 +42,28 @@ func Optimize(m Matcher) (opt Matcher) {
 		if leftNil && rightNil {
 			return NewText(txt.s)
 		}
-
 		_, leftSuper := v.left.(Super)
 		lp, leftPrefix := v.left.(Prefix)
 		la, leftAny := v.left.(Any)
-
 		_, rightSuper := v.right.(Super)
 		rs, rightSuffix := v.right.(Suffix)
 		ra, rightAny := v.right.(Any)
-
 		switch {
 		case leftSuper && rightSuper:
 			return NewContains(txt.s)
-
 		case leftSuper && rightNil:
 			return NewSuffix(txt.s)
-
 		case rightSuper && leftNil:
 			return NewPrefix(txt.s)
-
 		case leftNil && rightSuffix:
 			return NewPrefixSuffix(txt.s, rs.s)
-
 		case rightNil && leftPrefix:
 			return NewPrefixSuffix(lp.s, txt.s)
-
 		case rightNil && leftAny:
 			return NewSuffixAny(txt.s, la.sep)
-
 		case leftNil && rightAny:
 			return NewPrefixAny(txt.s, ra.sep)
 		}
-
 	case Container:
 		var (
 			first Matcher
@@ -92,7 +78,6 @@ func Optimize(m Matcher) (opt Matcher) {
 		}
 		return m
 	}
-
 	return m
 }
 
@@ -113,11 +98,9 @@ func Compile(ms []Matcher) (m Matcher, err error) {
 	if m := glueMatchers(ms); m != nil {
 		return m, nil
 	}
-
 	var (
-		x   = -1
-		max = -2
-
+		x        = -1
+		max      = -2
 		wantText bool
 		indexer  MatchIndexer
 	)
@@ -141,13 +124,11 @@ func Compile(ms []Matcher) (m Matcher, err error) {
 	if indexer == nil {
 		return nil, fmt.Errorf("can not index on matchers")
 	}
-
 	left := ms[:x]
 	var right []Matcher
 	if len(ms) > x+1 {
 		right = ms[x+1:]
 	}
-
 	var (
 		l Matcher = Nothing{}
 		r Matcher = Nothing{}
@@ -196,7 +177,6 @@ func glueMatchersAsEvery(ms []Matcher) Matcher {
 	if len(ms) <= 1 {
 		return nil
 	}
-
 	var (
 		hasAny    bool
 		hasSuper  bool
@@ -204,24 +184,19 @@ func glueMatchersAsEvery(ms []Matcher) Matcher {
 		min       int
 		separator []rune
 	)
-
 	for i, matcher := range ms {
 		var sep []rune
-
 		switch m := matcher.(type) {
 		case Super:
 			sep = []rune{}
 			hasSuper = true
-
 		case Any:
 			sep = m.sep
 			hasAny = true
-
 		case Single:
 			sep = m.sep
 			hasSingle = true
 			min++
-
 		case List:
 			if !m.not {
 				return nil
@@ -229,35 +204,27 @@ func glueMatchersAsEvery(ms []Matcher) Matcher {
 			sep = m.rs
 			hasSingle = true
 			min++
-
 		default:
 			return nil
 		}
-
 		// initialize
 		if i == 0 {
 			separator = sep
 		}
-
 		if runes.Equal(sep, separator) {
 			continue
 		}
-
 		return nil
 	}
-
 	if hasSuper && !hasAny && !hasSingle {
 		return NewSuper()
 	}
-
 	if hasAny && !hasSuper && !hasSingle {
 		return NewAny(separator)
 	}
-
 	if (hasAny || hasSuper) && min > 0 && len(separator) == 0 {
 		return NewMin(min)
 	}
-
 	var every []Matcher
 	if min > 0 {
 		every = append(every, NewMin(min))
@@ -268,7 +235,6 @@ func glueMatchersAsEvery(ms []Matcher) Matcher {
 	if len(separator) > 0 {
 		every = append(every, NewAny(separator))
 	}
-
 	return NewEveryOf(every)
 }
 

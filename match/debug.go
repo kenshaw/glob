@@ -11,7 +11,7 @@ import (
 
 var i = new(int32)
 
-func logf(f string, args ...interface{}) {
+func logf(f string, args ...any) {
 	n := int(atomic.LoadInt32(i))
 	fmt.Fprint(os.Stderr,
 		strings.Repeat("  ", n),
@@ -35,7 +35,6 @@ func Graphviz(pattern string, m Matcher) string {
 
 func graphviz(m Matcher, id string) string {
 	buf := &bytes.Buffer{}
-
 	switch v := m.(type) {
 	case Tree:
 		fmt.Fprintf(buf, `"%s"[label="%s"];`, id, v.value)
@@ -45,25 +44,21 @@ func graphviz(m Matcher, id string) string {
 				rnd := rand.Int63()
 				fmt.Fprintf(buf, `"%x"[label="<nil>"];`, rnd)
 				fmt.Fprintf(buf, `"%s"->"%x";`, id, rnd)
-
 			default:
 				sub := fmt.Sprintf("%x", rand.Int63())
 				fmt.Fprintf(buf, `"%s"->"%s";`, id, sub)
-				fmt.Fprintf(buf, graphviz(n, sub))
+				fmt.Fprint(buf, graphviz(n, sub))
 			}
 		}
-
 	case Container:
 		fmt.Fprintf(buf, `"%s"[label="Container(%T)"];`, id, m)
 		v.Content(func(m Matcher) {
 			rnd := rand.Int63()
-			fmt.Fprintf(buf, graphviz(m, fmt.Sprintf("%x", rnd)))
+			fmt.Fprint(buf, graphviz(m, fmt.Sprintf("%x", rnd)))
 			fmt.Fprintf(buf, `"%s"->"%x";`, id, rnd)
 		})
-
 	default:
 		fmt.Fprintf(buf, `"%s"[label="%s"];`, id, m)
 	}
-
 	return buf.String()
 }

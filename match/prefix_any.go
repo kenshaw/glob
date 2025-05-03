@@ -5,7 +5,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/gobwas/glob/util/runes"
+	"github.com/kenshaw/glob/util/runes"
 )
 
 type PrefixAny struct {
@@ -23,20 +23,17 @@ func (p PrefixAny) Index(s string) (int, []int) {
 	if idx == -1 {
 		return -1, nil
 	}
-
 	n := len(p.s)
 	sub := s[idx+n:]
 	i := runes.IndexAnyRune(sub, p.sep)
 	if i > -1 {
 		sub = sub[:i]
 	}
-
 	seg := acquireSegments(len(sub) + 1)
 	seg = append(seg, n)
 	for i, r := range sub {
 		seg = append(seg, n+i+utf8.RuneLen(r))
 	}
-
 	return idx, seg
 }
 

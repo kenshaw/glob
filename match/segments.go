@@ -19,7 +19,6 @@ func toPowerOfTwo(v int) int {
 	v |= v >> 8
 	v |= v >> 16
 	v++
-
 	return v
 }
 
@@ -49,7 +48,7 @@ var segmentsByRuneLength [5][]int = [5][]int{
 func init() {
 	for i := cacheToAndHigher; i >= cacheFrom; i >>= 1 {
 		func(i int) {
-			segmentsPools[i-1] = sync.Pool{New: func() interface{} {
+			segmentsPools[i-1] = sync.Pool{New: func() any {
 				return make([]int, 0, i)
 			}}
 		}(i)
@@ -74,18 +73,15 @@ func acquireSegments(c int) []int {
 	if c < cacheFrom {
 		return make([]int, 0, c)
 	}
-
 	return segmentsPools[getTableIndex(c)].Get().([]int)[:0]
 }
 
 func releaseSegments(s []int) {
 	c := cap(s)
-
 	// make []int with less capacity than cacheFrom
 	// is faster than acquiring it from pool
 	if c < cacheFrom {
 		return
 	}
-
 	segmentsPools[getTableIndex(c)].Put(s)
 }

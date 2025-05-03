@@ -55,7 +55,7 @@ func TestContainsIndex(t *testing.T) {
 
 func BenchmarkIndexContains(b *testing.B) {
 	m := Contains{string(bench_separators), true}
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_, s := m.Index(bench_pattern)
 		releaseSegments(s)
 	}

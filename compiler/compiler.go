@@ -2,13 +2,12 @@ package compiler
 
 // TODO use constructor with all matchers, and to their structs private
 // TODO glue multiple Text nodes (like after QuoteMeta)
-
 import (
 	"fmt"
 
-	"github.com/gobwas/glob/internal/debug"
-	"github.com/gobwas/glob/match"
-	"github.com/gobwas/glob/syntax/ast"
+	"github.com/kenshaw/glob/internal/debug"
+	"github.com/kenshaw/glob/match"
+	"github.com/kenshaw/glob/syntax/ast"
 )
 
 func Compile(tree *ast.Node, sep []rune) (match.Matcher, error) {
@@ -43,7 +42,6 @@ func compile(node *ast.Node, sep []rune) (m match.Matcher, err error) {
 			debug.LeavePrefix()
 		}()
 	}
-
 	// todo this could be faster on pattern_alternatives_combine_lite (see glob_test.go)
 	if n := ast.Minimize(node); n != nil {
 		debug.Logf("minimized tree -> %s", node, n)
@@ -61,7 +59,6 @@ func compile(node *ast.Node, sep []rune) (m match.Matcher, err error) {
 			return r, nil
 		}
 	}
-
 	switch node.Kind {
 	case ast.KindAnyOf:
 		matchers, err := compileNodes(node.Children, sep)
@@ -69,7 +66,6 @@ func compile(node *ast.Node, sep []rune) (m match.Matcher, err error) {
 			return nil, err
 		}
 		return match.NewAnyOf(matchers...), nil
-
 	case ast.KindPattern:
 		if len(node.Children) == 0 {
 			return match.NewNothing(), nil
@@ -82,34 +78,25 @@ func compile(node *ast.Node, sep []rune) (m match.Matcher, err error) {
 		if err != nil {
 			return nil, err
 		}
-
 	case ast.KindAny:
 		m = match.NewAny(sep)
-
 	case ast.KindSuper:
 		m = match.NewSuper()
-
 	case ast.KindSingle:
 		m = match.NewSingle(sep)
-
 	case ast.KindNothing:
 		m = match.NewNothing()
-
 	case ast.KindList:
 		l := node.Value.(ast.List)
 		m = match.NewList([]rune(l.Chars), l.Not)
-
 	case ast.KindRange:
 		r := node.Value.(ast.Range)
 		m = match.NewRange(r.Lo, r.Hi, r.Not)
-
 	case ast.KindText:
 		t := node.Value.(ast.Text)
 		m = match.NewText(t.Text)
-
 	default:
 		return nil, fmt.Errorf("could not compile tree: unknown node type")
 	}
-
 	return match.Optimize(m), nil
 }

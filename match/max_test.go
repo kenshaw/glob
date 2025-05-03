@@ -38,8 +38,7 @@ func TestMaxIndex(t *testing.T) {
 
 func BenchmarkIndexMax(b *testing.B) {
 	m := NewMax(10)
-
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_, s := m.Index(bench_pattern)
 		releaseSegments(s)
 	}
@@ -47,7 +46,6 @@ func BenchmarkIndexMax(b *testing.B) {
 
 func BenchmarkIndexMaxParallel(b *testing.B) {
 	m := NewMax(10)
-
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
 			_, s := m.Index(bench_pattern)

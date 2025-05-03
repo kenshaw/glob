@@ -48,8 +48,7 @@ func TestPrefixSuffixIndex(t *testing.T) {
 
 func BenchmarkIndexPrefixSuffix(b *testing.B) {
 	m := NewPrefixSuffix("qew", "sqw")
-
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_, s := m.Index(bench_pattern)
 		releaseSegments(s)
 	}
@@ -57,7 +56,6 @@ func BenchmarkIndexPrefixSuffix(b *testing.B) {
 
 func BenchmarkIndexPrefixSuffixParallel(b *testing.B) {
 	m := NewPrefixSuffix("qew", "sqw")
-
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
 			_, s := m.Index(bench_pattern)

@@ -153,7 +153,6 @@ func TestMinimize(t *testing.T) {
 	} {
 		t.Run("", func(t *testing.T) {
 			act := Minimize(test.in)
-
 			if !reflect.DeepEqual(act, test.exp) {
 				t.Errorf(
 					"Minimize():\nact: %#v;\nexp: %#v",

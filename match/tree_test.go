@@ -90,12 +90,9 @@ func BenchmarkMatchTree(b *testing.B) {
 	l := &fakeMatcher{4, 3, "left_fake"}
 	r := &fakeMatcher{4, 3, "right_fake"}
 	v := &fakeMatcher{2, 3, "value_fake"}
-
 	// must be <= len(l + r + v)
 	fixture := "abcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghij"
-
 	bt := NewTree(v, l, r)
-
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
 			bt.Match(fixture)

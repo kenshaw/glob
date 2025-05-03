@@ -22,34 +22,27 @@ func (ps PrefixSuffix) Index(s string) (int, []int) {
 	if prefixIdx == -1 {
 		return -1, nil
 	}
-
 	suffixLen := len(ps.s)
 	if suffixLen <= 0 {
 		return prefixIdx, []int{len(s) - prefixIdx}
 	}
-
 	if (len(s) - prefixIdx) <= 0 {
 		return -1, nil
 	}
-
 	segments := acquireSegments(len(s) - prefixIdx)
 	for sub := s[prefixIdx:]; ; {
 		suffixIdx := strings.LastIndex(sub, ps.s)
 		if suffixIdx == -1 {
 			break
 		}
-
 		segments = append(segments, suffixIdx+suffixLen)
 		sub = sub[:suffixIdx]
 	}
-
 	if len(segments) == 0 {
 		releaseSegments(segments)
 		return -1, nil
 	}
-
 	reverseSegments(segments)
-
 	return prefixIdx, segments
 }
 

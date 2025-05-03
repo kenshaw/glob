@@ -48,8 +48,7 @@ func TestRangeIndex(t *testing.T) {
 
 func BenchmarkIndexRange(b *testing.B) {
 	m := NewRange('0', '9', false)
-
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_, s := m.Index(bench_pattern)
 		releaseSegments(s)
 	}
@@ -57,7 +56,6 @@ func BenchmarkIndexRange(b *testing.B) {
 
 func BenchmarkIndexRangeParallel(b *testing.B) {
 	m := NewRange('0', '9', false)
-
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
 			_, s := m.Index(bench_pattern)

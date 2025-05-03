@@ -4,27 +4,23 @@ import (
 	"fmt"
 	"unicode/utf8"
 
-	"github.com/gobwas/glob/internal/debug"
-	"github.com/gobwas/glob/util/runes"
+	"github.com/kenshaw/glob/internal/debug"
+	"github.com/kenshaw/glob/util/runes"
 )
 
 type Tree struct {
-	value MatchIndexer
-	left  Matcher
-	right Matcher
-
+	value  MatchIndexer
+	left   Matcher
+	right  Matcher
 	minLen int
-
 	runes  int
 	vrunes int
 	lrunes int
 	rrunes int
 }
-
 type SizedTree struct {
 	Tree
 }
-
 type IndexedTree struct {
 	value MatchIndexer
 	left  MatchIndexer
@@ -62,8 +58,8 @@ func NewTree(v MatchIndexer, l, r Matcher) Matcher {
 	if vsz {
 		tree.vrunes = vs.RunesCount()
 	}
-	//li, lix := l.(MatchIndexer)
-	//ri, rix := r.(MatchIndexer)
+	// li, lix := l.(MatchIndexer)
+	// ri, rix := r.(MatchIndexer)
 	if vsz && lsz && rsz {
 		tree.runes = tree.vrunes + tree.lrunes + tree.rrunes
 		return SizedTree{tree}
@@ -90,10 +86,8 @@ func (t Tree) Match(s string) (ok bool) {
 		done := debug.Matching("tree", s)
 		defer func() { done(ok) }()
 	}
-
 	n := len(s)
 	offset, limit := t.offsetLimit(s)
-
 	for len(s)-offset-limit >= t.vrunes {
 		if debug.Enabled {
 			debug.Logf(
@@ -112,7 +106,6 @@ func (t Tree) Match(s string) (ok bool) {
 			releaseSegments(segments)
 			return false
 		}
-
 		if debug.Enabled {
 			debug.Logf("matching left: %q", s[:offset+index])
 		}
@@ -120,7 +113,6 @@ func (t Tree) Match(s string) (ok bool) {
 		if debug.Enabled {
 			debug.Logf("matching left: -> %t", left)
 		}
-
 		if left {
 			for _, seg := range segments {
 				if debug.Enabled {
@@ -136,9 +128,7 @@ func (t Tree) Match(s string) (ok bool) {
 				}
 			}
 		}
-
 		releaseSegments(segments)
-
 		_, x := utf8.DecodeRuneInString(s[offset+index:])
 		if x == 0 {
 			// No progress.
@@ -146,7 +136,6 @@ func (t Tree) Match(s string) (ok bool) {
 		}
 		offset = offset + index + x
 	}
-
 	return false
 }
 

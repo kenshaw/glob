@@ -8,11 +8,11 @@ import (
 type Node struct {
 	Parent   *Node
 	Children []*Node
-	Value    interface{}
+	Value    any
 	Kind     Kind
 }
 
-func NewNode(k Kind, v interface{}, ch ...*Node) *Node {
+func NewNode(k Kind, v any, ch ...*Node) *Node {
 	n := &Node{
 		Kind:  k,
 		Value: v,
@@ -72,16 +72,13 @@ type List struct {
 	Not   bool
 	Chars string
 }
-
 type Range struct {
 	Not    bool
 	Lo, Hi rune
 }
-
 type Text struct {
 	Text string
 }
-
 type Kind int
 
 const (

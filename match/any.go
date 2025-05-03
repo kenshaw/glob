@@ -3,7 +3,7 @@ package match
 import (
 	"fmt"
 
-	"github.com/gobwas/glob/util/runes"
+	"github.com/kenshaw/glob/util/runes"
 )
 
 type Any struct {
@@ -27,13 +27,11 @@ func (a Any) Index(s string) (int, []int) {
 	default:
 		s = s[:found]
 	}
-
 	segments := acquireSegments(len(s))
 	for i := range s {
 		segments = append(segments, i)
 	}
 	segments = append(segments, len(s))
-
 	return 0, segments
 }
 
