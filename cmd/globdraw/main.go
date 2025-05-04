@@ -14,29 +14,33 @@ import (
 )
 
 func main() {
-	var (
-		pattern  = flag.String("p", "", "pattern to draw")
-		sep      = flag.String("s", "", "comma separated list of separators characters")
-		filepath = flag.String("file", "", "path for patterns file")
-		auto     = flag.Bool("auto", false, "autoopen result")
-		offset   = flag.Int("offset", 0, "patterns to skip")
-	)
+	pattern := flag.String("p", "", "pattern to draw")
+	sep := flag.String("s", "", "comma separated list of separators characters")
+	filepath := flag.String("file", "", "path for patterns file")
+	auto := flag.Bool("auto", false, "autoopen result")
+	offset := flag.Int("offset", 0, "patterns to skip")
 	flag.Parse()
-	var patterns []string
-	if *pattern != "" {
-		patterns = append(patterns, *pattern)
+	if err := run(*pattern, *sep, *filepath, *auto, *offset); err != nil {
+		fmt.Fprintf(os.Stderr, "error: %v\n", err)
+		os.Exit(1)
 	}
-	if *filepath != "" {
-		file, err := os.Open(*filepath)
+}
+
+func run(pattern, sep, filepath string, auto bool, offset int) error {
+	var patterns []string
+	if pattern != "" {
+		patterns = append(patterns, pattern)
+	}
+	if filepath != "" {
+		file, err := os.Open(filepath)
 		if err != nil {
-			fmt.Printf("could not open file: %v\n", err)
-			os.Exit(1)
+			return fmt.Errorf("could not open %s: %v", filepath, err)
 		}
 		s := bufio.NewScanner(file)
 		for s.Scan() {
-			fmt.Println(*offset)
-			if *offset > 0 {
-				*offset--
+			fmt.Println(offset)
+			if offset > 0 {
+				offset--
 				fmt.Println("skipped")
 				continue
 			}
@@ -45,15 +49,14 @@ func main() {
 		file.Close()
 	}
 	if len(patterns) == 0 {
-		return
+		return nil
 	}
 	var separators []rune
-	if len(*sep) > 0 {
-		for c := range strings.SplitSeq(*sep, ",") {
+	if len(sep) > 0 {
+		for c := range strings.SplitSeq(sep, ",") {
 			r, w := utf8.DecodeRuneInString(c)
 			if len(c) > w {
-				fmt.Printf("only single charactered separators are allowed: %+q\n", c)
-				os.Exit(1)
+				return fmt.Errorf("only single charactered separators are allowed: %+q", c)
 			}
 			separators = append(separators, r)
 		}
@@ -62,23 +65,23 @@ func main() {
 	for _, p := range patterns {
 		g, err := glob.Compile(p, separators...)
 		if err != nil {
-			fmt.Printf("could not compile pattern %+q: %v\n", p, err)
-			os.Exit(1)
+			return fmt.Errorf("could not compile pattern %+q: %v", p, err)
 		}
 		s := match.Graphviz(p, g.(match.Matcher))
-		if *auto {
+		if auto {
 			fmt.Fprintf(os.Stdout, "pattern: %+q: ", p)
 			if err := open(s); err != nil {
 				fmt.Printf("could not open graphviz: %v", err)
 				os.Exit(1)
 			}
 			if !next(br) {
-				return
+				return nil
 			}
 		} else {
 			fmt.Fprintln(os.Stdout, s)
 		}
 	}
+	return nil
 }
 
 func open(s string) error {
