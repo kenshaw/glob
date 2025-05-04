@@ -6,8 +6,8 @@ import (
 
 // Minimize applies heuristics to minimize the number of nodes in t.
 func Minimize(t *Node) *Node {
-	switch t.Kind {
-	case KindAnyOf:
+	switch t.Type {
+	case AnyOf:
 		return minimizeAnyOf(t)
 	default:
 		return nil
@@ -18,7 +18,7 @@ func Minimize(t *Node) *Node {
 // it searches for common children from left and from right if any common
 // children are found – then it returns new optimized ast t else it returns nil
 func minimizeAnyOf(t *Node) *Node {
-	if !SameKind(t.Children, KindPattern) {
+	if !SameKind(t.Children, Pattern) {
 		return nil
 	}
 	commonLeft, commonRight := CommonChildren(t.Children)
@@ -28,7 +28,7 @@ func minimizeAnyOf(t *Node) *Node {
 	}
 	var result []*Node
 	if commonLeftCount > 0 {
-		result = append(result, New(KindPattern, nil, commonLeft...))
+		result = append(result, New(Pattern, nil, commonLeft...))
 	}
 	var anyOf []*Node
 	for _, child := range t.Children {
@@ -37,22 +37,22 @@ func minimizeAnyOf(t *Node) *Node {
 		if len(reuse) == 0 {
 			// this pattern is completely reduced by commonLeft and commonRight
 			// patterns so it become nothing
-			node = New(KindNothing, nil)
+			node = New(Nothing, nil)
 		} else {
-			node = New(KindPattern, nil, reuse...)
+			node = New(Pattern, nil, reuse...)
 		}
 		anyOf = AppendUnique(anyOf, node)
 	}
 	switch {
-	case len(anyOf) == 1 && anyOf[0].Kind != KindNothing:
+	case len(anyOf) == 1 && anyOf[0].Type != Nothing:
 		result = append(result, anyOf[0])
 	case len(anyOf) > 1:
-		result = append(result, New(KindAnyOf, nil, anyOf...))
+		result = append(result, New(AnyOf, nil, anyOf...))
 	}
 	if commonRightCount > 0 {
-		result = append(result, New(KindPattern, nil, commonRight...))
+		result = append(result, New(Pattern, nil, commonRight...))
 	}
-	return New(KindPattern, nil, result...)
+	return New(Pattern, nil, result...)
 }
 
 func CommonChildren(nodes []*Node) (commonLeft, commonRight []*Node) {
@@ -114,9 +114,9 @@ func AppendUnique(target []*Node, val *Node) []*Node {
 	return append(target, val)
 }
 
-func SameKind(nodes []*Node, kind Kind) bool {
+func SameKind(nodes []*Node, kind Type) bool {
 	for _, n := range nodes {
-		if n.Kind != kind {
+		if n.Type != kind {
 			return false
 		}
 	}

@@ -13,7 +13,7 @@ func TestCommonChildren(t *testing.T) {
 	}{
 		{
 			nodes: []*Node{
-				New(KindNothing, nil,
+				New(Nothing, nil,
 					New(KindText, Text{"a"}),
 					New(KindText, Text{"z"}),
 					New(KindText, Text{"c"}),
@@ -22,12 +22,12 @@ func TestCommonChildren(t *testing.T) {
 		},
 		{
 			nodes: []*Node{
-				New(KindNothing, nil,
+				New(Nothing, nil,
 					New(KindText, Text{"a"}),
 					New(KindText, Text{"z"}),
 					New(KindText, Text{"c"}),
 				),
-				New(KindNothing, nil,
+				New(Nothing, nil,
 					New(KindText, Text{"a"}),
 					New(KindText, Text{"b"}),
 					New(KindText, Text{"c"}),
@@ -42,13 +42,13 @@ func TestCommonChildren(t *testing.T) {
 		},
 		{
 			nodes: []*Node{
-				New(KindNothing, nil,
+				New(Nothing, nil,
 					New(KindText, Text{"a"}),
 					New(KindText, Text{"b"}),
 					New(KindText, Text{"c"}),
 					New(KindText, Text{"d"}),
 				),
-				New(KindNothing, nil,
+				New(Nothing, nil,
 					New(KindText, Text{"a"}),
 					New(KindText, Text{"b"}),
 					New(KindText, Text{"c"}),
@@ -67,12 +67,12 @@ func TestCommonChildren(t *testing.T) {
 		},
 		{
 			nodes: []*Node{
-				New(KindNothing, nil,
+				New(Nothing, nil,
 					New(KindText, Text{"a"}),
 					New(KindText, Text{"b"}),
 					New(KindText, Text{"c"}),
 				),
-				New(KindNothing, nil,
+				New(Nothing, nil,
 					New(KindText, Text{"a"}),
 					New(KindText, Text{"b"}),
 					New(KindText, Text{"b"}),
@@ -89,15 +89,15 @@ func TestCommonChildren(t *testing.T) {
 		},
 		{
 			nodes: []*Node{
-				New(KindNothing, nil,
+				New(Nothing, nil,
 					New(KindText, Text{"a"}),
 					New(KindText, Text{"d"}),
 				),
-				New(KindNothing, nil,
+				New(Nothing, nil,
 					New(KindText, Text{"a"}),
 					New(KindText, Text{"d"}),
 				),
-				New(KindNothing, nil,
+				New(Nothing, nil,
 					New(KindText, Text{"a"}),
 					New(KindText, Text{"e"}),
 				),

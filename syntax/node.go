@@ -8,25 +8,25 @@ import (
 	"github.com/kenshaw/glob/match"
 )
 
-type Kind int
+type Type int
 
 const (
-	KindNothing Kind = iota
-	KindPattern
+	Nothing Type = iota
+	Pattern
 	KindList
 	KindRange
 	KindText
-	KindAny
-	KindSuper
-	KindSingle
-	KindAnyOf
+	Any
+	Super
+	Single
+	AnyOf
 )
 
-func (kind Kind) String() string {
-	switch kind {
-	case KindNothing:
+func (typ Type) String() string {
+	switch typ {
+	case Nothing:
 		return "Nothing"
-	case KindPattern:
+	case Pattern:
 		return "Pattern"
 	case KindList:
 		return "List"
@@ -34,29 +34,29 @@ func (kind Kind) String() string {
 		return "Range"
 	case KindText:
 		return "Text"
-	case KindAny:
+	case Any:
 		return "Any"
-	case KindSuper:
+	case Super:
 		return "Super"
-	case KindSingle:
+	case Single:
 		return "Single"
-	case KindAnyOf:
+	case AnyOf:
 		return "AnyOf"
-	default:
-		return ""
 	}
+	return ""
 }
 
 type Node struct {
 	Parent   *Node
-	Kind     Kind
+	Type     Type
 	Value    any
 	Children []*Node
 }
 
-func New(k Kind, v any, ch ...*Node) *Node {
+// New creates a new node of type.
+func New(typ Type, v any, ch ...*Node) *Node {
 	node := &Node{
-		Kind:  k,
+		Type:  typ,
 		Value: v,
 	}
 	for _, c := range ch {
@@ -65,6 +65,7 @@ func New(k Kind, v any, ch ...*Node) *Node {
 	return node
 }
 
+// Insert inserts a child node.
 func (node *Node) Insert(children ...*Node) {
 	node.Children = append(node.Children, children...)
 	for _, ch := range children {
@@ -72,13 +73,14 @@ func (node *Node) Insert(children ...*Node) {
 	}
 }
 
-func (node *Node) Compile(sep []rune) (match.Matcher, error) {
-	return compileNode(node, sep)
+// Match builds the matcher for the node.
+func (node *Node) Match(sep []rune) (match.Matcher, error) {
+	return buildMatch(node, sep)
 }
 
 func (node *Node) Equal(n *Node) bool {
 	switch {
-	case node.Kind != n.Kind,
+	case node.Type != n.Type,
 		node.Value != n.Value,
 		len(node.Children) != len(n.Children):
 		return false
@@ -93,7 +95,7 @@ func (node *Node) Equal(n *Node) bool {
 
 func (node *Node) String() string {
 	var buf bytes.Buffer
-	buf.WriteString(node.Kind.String())
+	buf.WriteString(node.Type.String())
 	if node.Value != nil {
 		buf.WriteString(" =")
 		buf.WriteString(fmt.Sprintf("%v", node.Value))
@@ -128,7 +130,7 @@ type Text struct {
 // TODO use constructor with all matchers, and to their structs private
 // TODO glue multiple Text nodes (like after QuoteMeta)
 
-func compileNode(node *Node, sep []rune) (m match.Matcher, err error) {
+func buildMatch(node *Node, sep []rune) (m match.Matcher, err error) {
 	if debug.Enabled {
 		debug.EnterPrefix("compiler: compiling %s", node)
 		defer func() {
@@ -143,7 +145,7 @@ func compileNode(node *Node, sep []rune) (m match.Matcher, err error) {
 	// todo this could be faster on pattern_alternatives_combine_lite (see glob_test.go)
 	if n := Minimize(node); n != nil {
 		debug.Logf("minimized tree -> %s", node, n)
-		r, err := compileNode(n, sep)
+		r, err := buildMatch(n, sep)
 		if debug.Enabled {
 			if err != nil {
 				debug.Logf("compiler: compile minimized tree failed: %v", err)
@@ -157,14 +159,14 @@ func compileNode(node *Node, sep []rune) (m match.Matcher, err error) {
 			return r, nil
 		}
 	}
-	switch node.Kind {
-	case KindAnyOf:
+	switch node.Type {
+	case AnyOf:
 		matchers, err := compileNodes(node.Children, sep)
 		if err != nil {
 			return nil, err
 		}
 		return match.NewAnyOf(matchers...), nil
-	case KindPattern:
+	case Pattern:
 		if len(node.Children) == 0 {
 			return match.NewNothing(), nil
 		}
@@ -176,13 +178,13 @@ func compileNode(node *Node, sep []rune) (m match.Matcher, err error) {
 		if err != nil {
 			return nil, err
 		}
-	case KindAny:
+	case Any:
 		m = match.NewAny(sep)
-	case KindSuper:
+	case Super:
 		m = match.NewSuper()
-	case KindSingle:
+	case Single:
 		m = match.NewSingle(sep)
-	case KindNothing:
+	case Nothing:
 		m = match.NewNothing()
 	case KindList:
 		l := node.Value.(List)
@@ -194,7 +196,7 @@ func compileNode(node *Node, sep []rune) (m match.Matcher, err error) {
 		t := node.Value.(Text)
 		m = match.NewText(t.Text)
 	default:
-		return nil, fmt.Errorf("could not compile tree: unknown node type %s (%d)", node.Kind, int(node.Kind))
+		return nil, fmt.Errorf("could not compile tree: unknown node type %s (%d)", node.Type, int(node.Type))
 	}
 	return match.Optimize(m), nil
 }
@@ -202,7 +204,7 @@ func compileNode(node *Node, sep []rune) (m match.Matcher, err error) {
 func compileNodes(ns []*Node, sep []rune) ([]match.Matcher, error) {
 	var matchers []match.Matcher
 	for _, n := range ns {
-		m, err := compileNode(n, sep)
+		m, err := buildMatch(n, sep)
 		if err != nil {
 			return nil, err
 		}

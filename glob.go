@@ -2,12 +2,19 @@
 package glob
 
 import (
+	"fmt"
+
+	"github.com/kenshaw/glob/match"
 	"github.com/kenshaw/glob/syntax"
 )
 
-// Glob represents compiled glob pattern.
-type Glob interface {
-	Match(string) bool
+// Glob wraps a glob pattern.
+type Glob struct {
+	match.Matcher
+}
+
+func (g *Glob) String() string {
+	return fmt.Sprintf("%v", g.Matcher)
 }
 
 // Compile creates Glob for given pattern and strings (if any present after
@@ -35,21 +42,21 @@ type Glob interface {
 //	pattern-list:
 //	    pattern { `,` pattern }
 //	                comma-separated (without spaces) patterns
-func Compile(pattern string, separators ...rune) (Glob, error) {
-	ast, err := syntax.Parse(syntax.NewLexer(pattern))
+func Compile(pattern string, separators ...rune) (*Glob, error) {
+	tree, err := syntax.Parse(syntax.NewLexer(pattern))
 	if err != nil {
 		return nil, err
 	}
-	matcher, err := ast.Compile(separators)
+	m, err := tree.Match(separators)
 	if err != nil {
 		return nil, err
 	}
-	return matcher, nil
+	return &Glob{m}, nil
 }
 
 // MustCompile is the same as Compile, except that if Compile returns error,
 // this will panic
-func MustCompile(pattern string, separators ...rune) Glob {
+func MustCompile(pattern string, separators ...rune) *Glob {
 	g, err := Compile(pattern, separators...)
 	if err != nil {
 		panic(err)
@@ -58,7 +65,8 @@ func MustCompile(pattern string, separators ...rune) Glob {
 }
 
 // QuoteMeta returns a string that quotes all glob pattern meta characters
-// inside the argument text; For example, QuoteMeta(`{foo*}`) returns `\[foo\*\]`.
+// inside the argument text; For example, QuoteMeta(`{foo*}`) returns
+// `\[foo\*\]`.
 func QuoteMeta(s string) string {
 	b := make([]byte, 2*len(s))
 	// a byte loop is correct because all meta characters are ASCII

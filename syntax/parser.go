@@ -16,7 +16,7 @@ type lexer interface {
 }
 
 func parse(l lexer) (*Node, error) {
-	tree := New(KindPattern, nil)
+	tree := New(Pattern, nil)
 	var err error
 	for f, node := parseNode, tree; f != nil; {
 		f, node, err = f(node, l)
@@ -40,24 +40,24 @@ func parseNode(node *Node, l lexer) (parseFunc, *Node, error) {
 			node.Insert(New(KindText, Text{token.Raw}))
 			return parseNode, node, nil
 		case TokenAny:
-			node.Insert(New(KindAny, nil))
+			node.Insert(New(Any, nil))
 			return parseNode, node, nil
 		case TokenSuper:
-			node.Insert(New(KindSuper, nil))
+			node.Insert(New(Super, nil))
 			return parseNode, node, nil
 		case TokenSingle:
-			node.Insert(New(KindSingle, nil))
+			node.Insert(New(Single, nil))
 			return parseNode, node, nil
 		case TokenRangeOpen:
 			return parseRange, node, nil
 		case TokenTermsOpen:
-			n := New(KindAnyOf, nil)
+			n := New(AnyOf, nil)
 			node.Insert(n)
-			p := New(KindPattern, nil)
+			p := New(Pattern, nil)
 			n.Insert(p)
 			return parseNode, p, nil
 		case TokenSeparator:
-			n := New(KindPattern, nil)
+			n := New(Pattern, nil)
 			node.Parent.Insert(n)
 			return parseNode, n, nil
 		case TokenTermsClose:

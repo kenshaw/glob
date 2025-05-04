@@ -9,51 +9,52 @@ import (
 )
 
 func TestNode(t *testing.T) {
+	sep := []rune{'.'}
 	for i, test := range []struct {
 		tree *Node
-		exp  match.Matcher
 		sep  []rune
+		exp  match.Matcher
 	}{
 		{
 			// #0
-			tree: New(KindPattern, nil,
+			tree: New(Pattern, nil,
 				New(KindText, Text{"abc"}),
 			),
 			exp: match.NewText("abc"),
 		},
 		{
 			// #1
-			tree: New(KindPattern, nil,
-				New(KindAny, nil),
+			tree: New(Pattern, nil,
+				New(Any, nil),
 			),
-			sep: separators,
-			exp: match.NewAny(separators),
+			sep: sep,
+			exp: match.NewAny(sep),
 		},
 		{
 			// #2
-			tree: New(KindPattern, nil,
-				New(KindAny, nil),
+			tree: New(Pattern, nil,
+				New(Any, nil),
 			),
 			exp: match.NewSuper(),
 		},
 		{
 			// #3
-			tree: New(KindPattern, nil,
-				New(KindSuper, nil),
+			tree: New(Pattern, nil,
+				New(Super, nil),
 			),
 			exp: match.NewSuper(),
 		},
 		{
 			// #4
-			tree: New(KindPattern, nil,
-				New(KindSingle, nil),
+			tree: New(Pattern, nil,
+				New(Single, nil),
 			),
-			sep: separators,
-			exp: match.NewSingle(separators),
+			sep: sep,
+			exp: match.NewSingle(sep),
 		},
 		{
 			// #5
-			tree: New(KindPattern, nil,
+			tree: New(Pattern, nil,
 				New(KindRange, Range{
 					Lo:  'a',
 					Hi:  'z',
@@ -64,7 +65,7 @@ func TestNode(t *testing.T) {
 		},
 		{
 			// #6
-			tree: New(KindPattern, nil,
+			tree: New(Pattern, nil,
 				New(KindList, List{
 					Chars: "abc",
 					Not:   true,
@@ -74,56 +75,56 @@ func TestNode(t *testing.T) {
 		},
 		{
 			// #7
-			tree: New(KindPattern, nil,
-				New(KindAny, nil),
-				New(KindSingle, nil),
-				New(KindSingle, nil),
-				New(KindSingle, nil),
+			tree: New(Pattern, nil,
+				New(Any, nil),
+				New(Single, nil),
+				New(Single, nil),
+				New(Single, nil),
 			),
-			sep: separators,
+			sep: sep,
 			exp: match.NewEveryOf([]match.Matcher{
 				match.NewMin(3),
-				match.NewAny(separators),
+				match.NewAny(sep),
 			}),
 		},
 		{
 			// #8
-			tree: New(KindPattern, nil,
-				New(KindAny, nil),
-				New(KindSingle, nil),
-				New(KindSingle, nil),
-				New(KindSingle, nil),
+			tree: New(Pattern, nil,
+				New(Any, nil),
+				New(Single, nil),
+				New(Single, nil),
+				New(Single, nil),
 			),
 			exp: match.NewMin(3),
 		},
 		{
 			// #9
-			tree: New(KindPattern, nil,
-				New(KindAny, nil),
+			tree: New(Pattern, nil,
+				New(Any, nil),
 				New(KindText, Text{"abc"}),
-				New(KindSingle, nil),
+				New(Single, nil),
 			),
-			sep: separators,
+			sep: sep,
 			exp: match.NewTree(
 				match.NewRow([]match.MatchIndexSizer{
 					match.NewText("abc"),
-					match.NewSingle(separators),
+					match.NewSingle(sep),
 				}),
-				match.NewAny(separators),
+				match.NewAny(sep),
 				match.Nothing{},
 			),
 		},
 		{
 			// #10
-			tree: New(KindPattern, nil,
+			tree: New(Pattern, nil,
 				New(KindText, Text{"/"}),
-				New(KindAnyOf, nil,
+				New(AnyOf, nil,
 					New(KindText, Text{"z"}),
 					New(KindText, Text{"ab"}),
 				),
-				New(KindSuper, nil),
+				New(Super, nil),
 			),
-			sep: separators,
+			sep: sep,
 			exp: match.NewTree(
 				match.NewText("/"),
 				match.Nothing{},
@@ -139,18 +140,18 @@ func TestNode(t *testing.T) {
 		},
 		{
 			// #11
-			tree: New(KindPattern, nil,
-				New(KindSuper, nil),
-				New(KindSingle, nil),
+			tree: New(Pattern, nil,
+				New(Super, nil),
+				New(Single, nil),
 				New(KindText, Text{"abc"}),
-				New(KindSingle, nil),
+				New(Single, nil),
 			),
-			sep: separators,
+			sep: sep,
 			exp: match.NewTree(
 				match.NewRow([]match.MatchIndexSizer{
-					match.NewSingle(separators),
+					match.NewSingle(sep),
 					match.NewText("abc"),
-					match.NewSingle(separators),
+					match.NewSingle(sep),
 				}),
 				match.NewSuper(),
 				match.Nothing{},
@@ -158,67 +159,67 @@ func TestNode(t *testing.T) {
 		},
 		{
 			// #12
-			tree: New(KindPattern, nil,
-				New(KindAny, nil),
+			tree: New(Pattern, nil,
+				New(Any, nil),
 				New(KindText, Text{"abc"}),
 			),
 			exp: match.NewSuffix("abc"),
 		},
 		{
 			// #13
-			tree: New(KindPattern, nil,
+			tree: New(Pattern, nil,
 				New(KindText, Text{"abc"}),
-				New(KindAny, nil),
+				New(Any, nil),
 			),
 			exp: match.NewPrefix("abc"),
 		},
 		{
 			// #14
-			tree: New(KindPattern, nil,
+			tree: New(Pattern, nil,
 				New(KindText, Text{"abc"}),
-				New(KindAny, nil),
+				New(Any, nil),
 				New(KindText, Text{"def"}),
 			),
 			exp: match.NewPrefixSuffix("abc", "def"),
 		},
 		{
 			// #15
-			tree: New(KindPattern, nil,
-				New(KindAny, nil),
-				New(KindAny, nil),
-				New(KindAny, nil),
+			tree: New(Pattern, nil,
+				New(Any, nil),
+				New(Any, nil),
+				New(Any, nil),
 				New(KindText, Text{"abc"}),
-				New(KindAny, nil),
-				New(KindAny, nil),
+				New(Any, nil),
+				New(Any, nil),
 			),
 			exp: match.NewContains("abc"),
 		},
 		{
 			// #16
-			tree: New(KindPattern, nil,
-				New(KindAny, nil),
-				New(KindAny, nil),
-				New(KindAny, nil),
+			tree: New(Pattern, nil,
+				New(Any, nil),
+				New(Any, nil),
+				New(Any, nil),
 				New(KindText, Text{"abc"}),
-				New(KindAny, nil),
-				New(KindAny, nil),
+				New(Any, nil),
+				New(Any, nil),
 			),
-			sep: separators,
+			sep: sep,
 			exp: match.NewTree(
 				match.NewText("abc"),
-				match.NewAny(separators),
-				match.NewAny(separators),
+				match.NewAny(sep),
+				match.NewAny(sep),
 			),
 		},
 		{
 			// #17
 			// pattern: "**?abc**?"
-			tree: New(KindPattern, nil,
-				New(KindSuper, nil),
-				New(KindSingle, nil),
+			tree: New(Pattern, nil,
+				New(Super, nil),
+				New(Single, nil),
 				New(KindText, Text{"abc"}),
-				New(KindSuper, nil),
-				New(KindSingle, nil),
+				New(Super, nil),
+				New(Single, nil),
 			),
 			exp: match.NewTree(
 				match.NewText("abc"),
@@ -228,18 +229,18 @@ func TestNode(t *testing.T) {
 		},
 		{
 			// #18
-			tree: New(KindPattern, nil,
+			tree: New(Pattern, nil,
 				New(KindText, Text{"abc"}),
 			),
 			exp: match.NewText("abc"),
 		},
 		{
 			// #19
-			tree: New(KindPattern, nil,
-				New(KindAnyOf, nil,
-					New(KindPattern, nil,
-						New(KindAnyOf, nil,
-							New(KindPattern, nil,
+			tree: New(Pattern, nil,
+				New(AnyOf, nil,
+					New(Pattern, nil,
+						New(AnyOf, nil,
+							New(Pattern, nil,
 								New(KindText, Text{"abc"}),
 							),
 						),
@@ -250,20 +251,20 @@ func TestNode(t *testing.T) {
 		},
 		{
 			// #20
-			tree: New(KindPattern, nil,
-				New(KindAnyOf, nil,
-					New(KindPattern, nil,
+			tree: New(Pattern, nil,
+				New(AnyOf, nil,
+					New(Pattern, nil,
 						New(KindText, Text{"abc"}),
-						New(KindSingle, nil),
+						New(Single, nil),
 					),
-					New(KindPattern, nil,
+					New(Pattern, nil,
 						New(KindText, Text{"abc"}),
 						New(KindList, List{Chars: "def"}),
 					),
-					New(KindPattern, nil,
+					New(Pattern, nil,
 						New(KindText, Text{"abc"}),
 					),
-					New(KindPattern, nil,
+					New(Pattern, nil,
 						New(KindText, Text{"abc"}),
 					),
 				),
@@ -280,10 +281,10 @@ func TestNode(t *testing.T) {
 		},
 		{
 			// #21
-			tree: New(KindPattern, nil,
+			tree: New(Pattern, nil,
 				New(KindRange, Range{Lo: 'a', Hi: 'z'}),
 				New(KindRange, Range{Lo: 'a', Hi: 'x', Not: true}),
-				New(KindAny, nil),
+				New(Any, nil),
 			),
 			exp: match.NewTree(
 				match.NewRow([]match.MatchIndexSizer{
@@ -296,14 +297,14 @@ func TestNode(t *testing.T) {
 		},
 		{
 			// #22
-			tree: New(KindPattern, nil,
-				New(KindAnyOf, nil,
-					New(KindPattern, nil,
+			tree: New(Pattern, nil,
+				New(AnyOf, nil,
+					New(Pattern, nil,
 						New(KindText, Text{"abc"}),
 						New(KindList, List{Chars: "abc"}),
 						New(KindText, Text{"ghi"}),
 					),
-					New(KindPattern, nil,
+					New(Pattern, nil,
 						New(KindText, Text{"abc"}),
 						New(KindList, List{Chars: "def"}),
 						New(KindText, Text{"ghi"}),
@@ -321,7 +322,7 @@ func TestNode(t *testing.T) {
 		},
 	} {
 		t.Run(strconv.Itoa(i), func(t *testing.T) {
-			m, err := test.tree.Compile(test.sep)
+			m, err := test.tree.Match(test.sep)
 			if err != nil {
 				t.Fatalf("compilation error: %s", err)
 			}
@@ -336,5 +337,3 @@ func TestNode(t *testing.T) {
 		})
 	}
 }
-
-var separators = []rune{'.'}
