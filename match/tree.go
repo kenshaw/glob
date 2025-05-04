@@ -5,7 +5,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/kenshaw/glob/internal/debug"
-	"github.com/kenshaw/glob/util/runes"
+	"github.com/kenshaw/glob/runes"
 )
 
 type Tree struct {

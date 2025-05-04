@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"unicode/utf8"
 
-	"github.com/kenshaw/glob/util/runes"
+	"github.com/kenshaw/glob/runes"
 )
 
 const (

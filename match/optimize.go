@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/kenshaw/glob/internal/debug"
-	"github.com/kenshaw/glob/util/runes"
+	"github.com/kenshaw/glob/runes"
 )
 
 func Optimize(m Matcher) (opt Matcher) {
