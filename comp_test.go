@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/kenshaw/glob/match"
-	"github.com/kenshaw/glob/syntax/ast"
+	"github.com/kenshaw/glob/syntax"
 )
 
 var separators = []rune{'.'}
@@ -13,51 +13,51 @@ var separators = []rune{'.'}
 func TestCompiler(t *testing.T) {
 	for _, test := range []struct {
 		name string
-		ast  *ast.Node
+		ast  *syntax.Node
 		exp  match.Matcher
 		sep  []rune
 	}{
 		{
 			// #0
-			ast: ast.NewNode(ast.KindPattern, nil,
-				ast.NewNode(ast.KindText, ast.Text{"abc"}),
+			ast: syntax.NewNode(syntax.KindPattern, nil,
+				syntax.NewNode(syntax.KindText, syntax.Text{"abc"}),
 			),
 			exp: match.NewText("abc"),
 		},
 		{
 			// #1
-			ast: ast.NewNode(ast.KindPattern, nil,
-				ast.NewNode(ast.KindAny, nil),
+			ast: syntax.NewNode(syntax.KindPattern, nil,
+				syntax.NewNode(syntax.KindAny, nil),
 			),
 			sep: separators,
 			exp: match.NewAny(separators),
 		},
 		{
 			// #2
-			ast: ast.NewNode(ast.KindPattern, nil,
-				ast.NewNode(ast.KindAny, nil),
+			ast: syntax.NewNode(syntax.KindPattern, nil,
+				syntax.NewNode(syntax.KindAny, nil),
 			),
 			exp: match.NewSuper(),
 		},
 		{
 			// #3
-			ast: ast.NewNode(ast.KindPattern, nil,
-				ast.NewNode(ast.KindSuper, nil),
+			ast: syntax.NewNode(syntax.KindPattern, nil,
+				syntax.NewNode(syntax.KindSuper, nil),
 			),
 			exp: match.NewSuper(),
 		},
 		{
 			// #4
-			ast: ast.NewNode(ast.KindPattern, nil,
-				ast.NewNode(ast.KindSingle, nil),
+			ast: syntax.NewNode(syntax.KindPattern, nil,
+				syntax.NewNode(syntax.KindSingle, nil),
 			),
 			sep: separators,
 			exp: match.NewSingle(separators),
 		},
 		{
 			// #5
-			ast: ast.NewNode(ast.KindPattern, nil,
-				ast.NewNode(ast.KindRange, ast.Range{
+			ast: syntax.NewNode(syntax.KindPattern, nil,
+				syntax.NewNode(syntax.KindRange, syntax.Range{
 					Lo:  'a',
 					Hi:  'z',
 					Not: true,
@@ -67,8 +67,8 @@ func TestCompiler(t *testing.T) {
 		},
 		{
 			// #6
-			ast: ast.NewNode(ast.KindPattern, nil,
-				ast.NewNode(ast.KindList, ast.List{
+			ast: syntax.NewNode(syntax.KindPattern, nil,
+				syntax.NewNode(syntax.KindList, syntax.List{
 					Chars: "abc",
 					Not:   true,
 				}),
@@ -77,11 +77,11 @@ func TestCompiler(t *testing.T) {
 		},
 		{
 			// #7
-			ast: ast.NewNode(ast.KindPattern, nil,
-				ast.NewNode(ast.KindAny, nil),
-				ast.NewNode(ast.KindSingle, nil),
-				ast.NewNode(ast.KindSingle, nil),
-				ast.NewNode(ast.KindSingle, nil),
+			ast: syntax.NewNode(syntax.KindPattern, nil,
+				syntax.NewNode(syntax.KindAny, nil),
+				syntax.NewNode(syntax.KindSingle, nil),
+				syntax.NewNode(syntax.KindSingle, nil),
+				syntax.NewNode(syntax.KindSingle, nil),
 			),
 			sep: separators,
 			exp: match.NewEveryOf([]match.Matcher{
@@ -91,20 +91,20 @@ func TestCompiler(t *testing.T) {
 		},
 		{
 			// #8
-			ast: ast.NewNode(ast.KindPattern, nil,
-				ast.NewNode(ast.KindAny, nil),
-				ast.NewNode(ast.KindSingle, nil),
-				ast.NewNode(ast.KindSingle, nil),
-				ast.NewNode(ast.KindSingle, nil),
+			ast: syntax.NewNode(syntax.KindPattern, nil,
+				syntax.NewNode(syntax.KindAny, nil),
+				syntax.NewNode(syntax.KindSingle, nil),
+				syntax.NewNode(syntax.KindSingle, nil),
+				syntax.NewNode(syntax.KindSingle, nil),
 			),
 			exp: match.NewMin(3),
 		},
 		{
 			// #9
-			ast: ast.NewNode(ast.KindPattern, nil,
-				ast.NewNode(ast.KindAny, nil),
-				ast.NewNode(ast.KindText, ast.Text{"abc"}),
-				ast.NewNode(ast.KindSingle, nil),
+			ast: syntax.NewNode(syntax.KindPattern, nil,
+				syntax.NewNode(syntax.KindAny, nil),
+				syntax.NewNode(syntax.KindText, syntax.Text{"abc"}),
+				syntax.NewNode(syntax.KindSingle, nil),
 			),
 			sep: separators,
 			exp: match.NewTree(
@@ -118,13 +118,13 @@ func TestCompiler(t *testing.T) {
 		},
 		{
 			// #10
-			ast: ast.NewNode(ast.KindPattern, nil,
-				ast.NewNode(ast.KindText, ast.Text{"/"}),
-				ast.NewNode(ast.KindAnyOf, nil,
-					ast.NewNode(ast.KindText, ast.Text{"z"}),
-					ast.NewNode(ast.KindText, ast.Text{"ab"}),
+			ast: syntax.NewNode(syntax.KindPattern, nil,
+				syntax.NewNode(syntax.KindText, syntax.Text{"/"}),
+				syntax.NewNode(syntax.KindAnyOf, nil,
+					syntax.NewNode(syntax.KindText, syntax.Text{"z"}),
+					syntax.NewNode(syntax.KindText, syntax.Text{"ab"}),
 				),
-				ast.NewNode(ast.KindSuper, nil),
+				syntax.NewNode(syntax.KindSuper, nil),
 			),
 			sep: separators,
 			exp: match.NewTree(
@@ -142,11 +142,11 @@ func TestCompiler(t *testing.T) {
 		},
 		{
 			// #11
-			ast: ast.NewNode(ast.KindPattern, nil,
-				ast.NewNode(ast.KindSuper, nil),
-				ast.NewNode(ast.KindSingle, nil),
-				ast.NewNode(ast.KindText, ast.Text{"abc"}),
-				ast.NewNode(ast.KindSingle, nil),
+			ast: syntax.NewNode(syntax.KindPattern, nil,
+				syntax.NewNode(syntax.KindSuper, nil),
+				syntax.NewNode(syntax.KindSingle, nil),
+				syntax.NewNode(syntax.KindText, syntax.Text{"abc"}),
+				syntax.NewNode(syntax.KindSingle, nil),
 			),
 			sep: separators,
 			exp: match.NewTree(
@@ -161,50 +161,50 @@ func TestCompiler(t *testing.T) {
 		},
 		{
 			// #12
-			ast: ast.NewNode(ast.KindPattern, nil,
-				ast.NewNode(ast.KindAny, nil),
-				ast.NewNode(ast.KindText, ast.Text{"abc"}),
+			ast: syntax.NewNode(syntax.KindPattern, nil,
+				syntax.NewNode(syntax.KindAny, nil),
+				syntax.NewNode(syntax.KindText, syntax.Text{"abc"}),
 			),
 			exp: match.NewSuffix("abc"),
 		},
 		{
 			// #13
-			ast: ast.NewNode(ast.KindPattern, nil,
-				ast.NewNode(ast.KindText, ast.Text{"abc"}),
-				ast.NewNode(ast.KindAny, nil),
+			ast: syntax.NewNode(syntax.KindPattern, nil,
+				syntax.NewNode(syntax.KindText, syntax.Text{"abc"}),
+				syntax.NewNode(syntax.KindAny, nil),
 			),
 			exp: match.NewPrefix("abc"),
 		},
 		{
 			// #14
-			ast: ast.NewNode(ast.KindPattern, nil,
-				ast.NewNode(ast.KindText, ast.Text{"abc"}),
-				ast.NewNode(ast.KindAny, nil),
-				ast.NewNode(ast.KindText, ast.Text{"def"}),
+			ast: syntax.NewNode(syntax.KindPattern, nil,
+				syntax.NewNode(syntax.KindText, syntax.Text{"abc"}),
+				syntax.NewNode(syntax.KindAny, nil),
+				syntax.NewNode(syntax.KindText, syntax.Text{"def"}),
 			),
 			exp: match.NewPrefixSuffix("abc", "def"),
 		},
 		{
 			// #15
-			ast: ast.NewNode(ast.KindPattern, nil,
-				ast.NewNode(ast.KindAny, nil),
-				ast.NewNode(ast.KindAny, nil),
-				ast.NewNode(ast.KindAny, nil),
-				ast.NewNode(ast.KindText, ast.Text{"abc"}),
-				ast.NewNode(ast.KindAny, nil),
-				ast.NewNode(ast.KindAny, nil),
+			ast: syntax.NewNode(syntax.KindPattern, nil,
+				syntax.NewNode(syntax.KindAny, nil),
+				syntax.NewNode(syntax.KindAny, nil),
+				syntax.NewNode(syntax.KindAny, nil),
+				syntax.NewNode(syntax.KindText, syntax.Text{"abc"}),
+				syntax.NewNode(syntax.KindAny, nil),
+				syntax.NewNode(syntax.KindAny, nil),
 			),
 			exp: match.NewContains("abc"),
 		},
 		{
 			// #16
-			ast: ast.NewNode(ast.KindPattern, nil,
-				ast.NewNode(ast.KindAny, nil),
-				ast.NewNode(ast.KindAny, nil),
-				ast.NewNode(ast.KindAny, nil),
-				ast.NewNode(ast.KindText, ast.Text{"abc"}),
-				ast.NewNode(ast.KindAny, nil),
-				ast.NewNode(ast.KindAny, nil),
+			ast: syntax.NewNode(syntax.KindPattern, nil,
+				syntax.NewNode(syntax.KindAny, nil),
+				syntax.NewNode(syntax.KindAny, nil),
+				syntax.NewNode(syntax.KindAny, nil),
+				syntax.NewNode(syntax.KindText, syntax.Text{"abc"}),
+				syntax.NewNode(syntax.KindAny, nil),
+				syntax.NewNode(syntax.KindAny, nil),
 			),
 			sep: separators,
 			exp: match.NewTree(
@@ -216,12 +216,12 @@ func TestCompiler(t *testing.T) {
 		{
 			// #17
 			// pattern: "**?abc**?"
-			ast: ast.NewNode(ast.KindPattern, nil,
-				ast.NewNode(ast.KindSuper, nil),
-				ast.NewNode(ast.KindSingle, nil),
-				ast.NewNode(ast.KindText, ast.Text{"abc"}),
-				ast.NewNode(ast.KindSuper, nil),
-				ast.NewNode(ast.KindSingle, nil),
+			ast: syntax.NewNode(syntax.KindPattern, nil,
+				syntax.NewNode(syntax.KindSuper, nil),
+				syntax.NewNode(syntax.KindSingle, nil),
+				syntax.NewNode(syntax.KindText, syntax.Text{"abc"}),
+				syntax.NewNode(syntax.KindSuper, nil),
+				syntax.NewNode(syntax.KindSingle, nil),
 			),
 			exp: match.NewTree(
 				match.NewText("abc"),
@@ -231,19 +231,19 @@ func TestCompiler(t *testing.T) {
 		},
 		{
 			// #18
-			ast: ast.NewNode(ast.KindPattern, nil,
-				ast.NewNode(ast.KindText, ast.Text{"abc"}),
+			ast: syntax.NewNode(syntax.KindPattern, nil,
+				syntax.NewNode(syntax.KindText, syntax.Text{"abc"}),
 			),
 			exp: match.NewText("abc"),
 		},
 		{
 			// #19
-			ast: ast.NewNode(ast.KindPattern, nil,
-				ast.NewNode(ast.KindAnyOf, nil,
-					ast.NewNode(ast.KindPattern, nil,
-						ast.NewNode(ast.KindAnyOf, nil,
-							ast.NewNode(ast.KindPattern, nil,
-								ast.NewNode(ast.KindText, ast.Text{"abc"}),
+			ast: syntax.NewNode(syntax.KindPattern, nil,
+				syntax.NewNode(syntax.KindAnyOf, nil,
+					syntax.NewNode(syntax.KindPattern, nil,
+						syntax.NewNode(syntax.KindAnyOf, nil,
+							syntax.NewNode(syntax.KindPattern, nil,
+								syntax.NewNode(syntax.KindText, syntax.Text{"abc"}),
 							),
 						),
 					),
@@ -253,21 +253,21 @@ func TestCompiler(t *testing.T) {
 		},
 		{
 			// #20
-			ast: ast.NewNode(ast.KindPattern, nil,
-				ast.NewNode(ast.KindAnyOf, nil,
-					ast.NewNode(ast.KindPattern, nil,
-						ast.NewNode(ast.KindText, ast.Text{"abc"}),
-						ast.NewNode(ast.KindSingle, nil),
+			ast: syntax.NewNode(syntax.KindPattern, nil,
+				syntax.NewNode(syntax.KindAnyOf, nil,
+					syntax.NewNode(syntax.KindPattern, nil,
+						syntax.NewNode(syntax.KindText, syntax.Text{"abc"}),
+						syntax.NewNode(syntax.KindSingle, nil),
 					),
-					ast.NewNode(ast.KindPattern, nil,
-						ast.NewNode(ast.KindText, ast.Text{"abc"}),
-						ast.NewNode(ast.KindList, ast.List{Chars: "def"}),
+					syntax.NewNode(syntax.KindPattern, nil,
+						syntax.NewNode(syntax.KindText, syntax.Text{"abc"}),
+						syntax.NewNode(syntax.KindList, syntax.List{Chars: "def"}),
 					),
-					ast.NewNode(ast.KindPattern, nil,
-						ast.NewNode(ast.KindText, ast.Text{"abc"}),
+					syntax.NewNode(syntax.KindPattern, nil,
+						syntax.NewNode(syntax.KindText, syntax.Text{"abc"}),
 					),
-					ast.NewNode(ast.KindPattern, nil,
-						ast.NewNode(ast.KindText, ast.Text{"abc"}),
+					syntax.NewNode(syntax.KindPattern, nil,
+						syntax.NewNode(syntax.KindText, syntax.Text{"abc"}),
 					),
 				),
 			),
@@ -283,10 +283,10 @@ func TestCompiler(t *testing.T) {
 		},
 		{
 			// #21
-			ast: ast.NewNode(ast.KindPattern, nil,
-				ast.NewNode(ast.KindRange, ast.Range{Lo: 'a', Hi: 'z'}),
-				ast.NewNode(ast.KindRange, ast.Range{Lo: 'a', Hi: 'x', Not: true}),
-				ast.NewNode(ast.KindAny, nil),
+			ast: syntax.NewNode(syntax.KindPattern, nil,
+				syntax.NewNode(syntax.KindRange, syntax.Range{Lo: 'a', Hi: 'z'}),
+				syntax.NewNode(syntax.KindRange, syntax.Range{Lo: 'a', Hi: 'x', Not: true}),
+				syntax.NewNode(syntax.KindAny, nil),
 			),
 			exp: match.NewTree(
 				match.NewRow([]match.MatchIndexSizer{
@@ -299,17 +299,17 @@ func TestCompiler(t *testing.T) {
 		},
 		{
 			// #22
-			ast: ast.NewNode(ast.KindPattern, nil,
-				ast.NewNode(ast.KindAnyOf, nil,
-					ast.NewNode(ast.KindPattern, nil,
-						ast.NewNode(ast.KindText, ast.Text{"abc"}),
-						ast.NewNode(ast.KindList, ast.List{Chars: "abc"}),
-						ast.NewNode(ast.KindText, ast.Text{"ghi"}),
+			ast: syntax.NewNode(syntax.KindPattern, nil,
+				syntax.NewNode(syntax.KindAnyOf, nil,
+					syntax.NewNode(syntax.KindPattern, nil,
+						syntax.NewNode(syntax.KindText, syntax.Text{"abc"}),
+						syntax.NewNode(syntax.KindList, syntax.List{Chars: "abc"}),
+						syntax.NewNode(syntax.KindText, syntax.Text{"ghi"}),
 					),
-					ast.NewNode(ast.KindPattern, nil,
-						ast.NewNode(ast.KindText, ast.Text{"abc"}),
-						ast.NewNode(ast.KindList, ast.List{Chars: "def"}),
-						ast.NewNode(ast.KindText, ast.Text{"ghi"}),
+					syntax.NewNode(syntax.KindPattern, nil,
+						syntax.NewNode(syntax.KindText, syntax.Text{"abc"}),
+						syntax.NewNode(syntax.KindList, syntax.List{Chars: "def"}),
+						syntax.NewNode(syntax.KindText, syntax.Text{"ghi"}),
 					),
 				),
 			),

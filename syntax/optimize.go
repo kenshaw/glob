@@ -1,11 +1,10 @@
-package ast
+package syntax
 
 import (
 	"reflect"
 )
 
-// Minimize tries to apply some heuristics to minimize number of nodes in given
-// t
+// Minimize applies heuristics to minimize the number of nodes in t.
 func Minimize(t *Node) *Node {
 	switch t.Kind {
 	case KindAnyOf:
@@ -16,9 +15,8 @@ func Minimize(t *Node) *Node {
 }
 
 // minimizeAnyOf tries to find common children of given node of AnyOf pattern
-// it searches for common children from left and from right
-// if any common children are found – then it returns new optimized ast t
-// else it returns nil
+// it searches for common children from left and from right if any common
+// children are found – then it returns new optimized ast t else it returns nil
 func minimizeAnyOf(t *Node) *Node {
 	if !SameKind(t.Children, KindPattern) {
 		return nil
@@ -68,9 +66,8 @@ func CommonChildren(nodes []*Node) (commonLeft, commonRight []*Node) {
 	}
 	tree := nodes[idx]
 	treeLength := len(tree.Children)
-	// allocate max able size for rightCommon slice
-	// to get ability insert elements in reverse order (from end to start)
-	// without sorting
+	// allocate max able size for rightCommon slice to get ability insert
+	// elements in reverse order (from end to start) without sorting
 	commonRight = make([]*Node, treeLength)
 	lastRight := treeLength // will use this to get results as commonRight[lastRight:]
 	var (

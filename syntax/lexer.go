@@ -1,4 +1,4 @@
-package lexer
+package syntax
 
 import (
 	"bytes"
@@ -8,31 +8,72 @@ import (
 	"github.com/kenshaw/glob/runes"
 )
 
+type TokenType int
+
 const (
-	char_any           = '*'
-	char_comma         = ','
-	char_single        = '?'
-	char_escape        = '\\'
-	char_range_open    = '['
-	char_range_close   = ']'
-	char_terms_open    = '{'
-	char_terms_close   = '}'
-	char_range_not     = '!'
-	char_range_between = '-'
+	TokenEOF TokenType = iota
+	TokenError
+	TokenText
+	TokenChar
+	TokenAny
+	TokenSuper
+	TokenSingle
+	TokenNot
+	TokenSeparator
+	TokenRangeOpen
+	TokenRangeClose
+	TokenRangeLo
+	TokenRangeHi
+	TokenRangeBetween
+	TokenTermsOpen
+	TokenTermsClose
 )
 
-var specials = []byte{
-	char_any,
-	char_single,
-	char_escape,
-	char_range_open,
-	char_range_close,
-	char_terms_open,
-	char_terms_close,
+func (typ TokenType) String() string {
+	switch typ {
+	case TokenEOF:
+		return "eof"
+	case TokenError:
+		return "error"
+	case TokenText:
+		return "text"
+	case TokenChar:
+		return "char"
+	case TokenAny:
+		return "any"
+	case TokenSuper:
+		return "super"
+	case TokenSingle:
+		return "single"
+	case TokenNot:
+		return "not"
+	case TokenSeparator:
+		return "separator"
+	case TokenRangeOpen:
+		return "range_open"
+	case TokenRangeClose:
+		return "range_close"
+	case TokenRangeLo:
+		return "range_lo"
+	case TokenRangeHi:
+		return "range_hi"
+	case TokenRangeBetween:
+		return "range_between"
+	case TokenTermsOpen:
+		return "terms_open"
+	case TokenTermsClose:
+		return "terms_close"
+	}
+	return "undef"
 }
 
-func Special(c byte) bool {
-	return bytes.IndexByte(specials, c) != -1
+type Token struct {
+	Type TokenType
+	Raw  string
+}
+
+func (t Token) String() string {
+	return fmt.Sprintf("%v<%q>", t.Type, t.Raw)
 }
 
 type tokens []Token
@@ -75,7 +116,7 @@ func NewLexer(source string) *lexer {
 
 func (l *lexer) Next() Token {
 	if l.err != nil {
-		return Token{Error, l.err.Error()}
+		return Token{TokenError, l.err.Error()}
 	}
 	if !l.tokens.empty() {
 		return l.tokens.shift()
@@ -139,35 +180,30 @@ func (l *lexer) termsLeave() {
 	l.termsLevel--
 }
 
-var (
-	inTextBreakers  = []rune{char_single, char_any, char_range_open, char_terms_open}
-	inTermsBreakers = append(inTextBreakers, char_terms_close, char_comma)
-)
-
 func (l *lexer) fetchItem() {
 	r := l.read()
 	switch {
 	case r == eof:
-		l.tokens.push(Token{EOF, ""})
+		l.tokens.push(Token{TokenEOF, ""})
 	case r == char_terms_open:
 		l.termsEnter()
-		l.tokens.push(Token{TermsOpen, string(r)})
+		l.tokens.push(Token{TokenTermsOpen, string(r)})
 	case r == char_comma && l.inTerms():
-		l.tokens.push(Token{Separator, string(r)})
+		l.tokens.push(Token{TokenSeparator, string(r)})
 	case r == char_terms_close && l.inTerms():
-		l.tokens.push(Token{TermsClose, string(r)})
+		l.tokens.push(Token{TokenTermsClose, string(r)})
 		l.termsLeave()
 	case r == char_range_open:
-		l.tokens.push(Token{RangeOpen, string(r)})
+		l.tokens.push(Token{TokenRangeOpen, string(r)})
 		l.fetchRange()
 	case r == char_single:
-		l.tokens.push(Token{Single, string(r)})
-	case r == char_any:
-		if l.read() == char_any {
-			l.tokens.push(Token{Super, string(r) + string(r)})
+		l.tokens.push(Token{TokenSingle, string(r)})
+	case r == charAny:
+		if l.read() == charAny {
+			l.tokens.push(Token{TokenSuper, string(r) + string(r)})
 		} else {
 			l.unread()
-			l.tokens.push(Token{Any, string(r)})
+			l.tokens.push(Token{TokenAny, string(r)})
 		}
 	default:
 		l.unread()
@@ -195,24 +231,24 @@ func (l *lexer) fetchRange() {
 			if r != char_range_close {
 				l.errorf("expected close range character")
 			} else {
-				l.tokens.push(Token{RangeClose, string(r)})
+				l.tokens.push(Token{TokenRangeClose, string(r)})
 			}
 			return
 		}
 		if wantHi {
-			l.tokens.push(Token{RangeHi, string(r)})
+			l.tokens.push(Token{TokenRangeHi, string(r)})
 			wantClose = true
 			continue
 		}
 		if !seenNot && r == char_range_not {
-			l.tokens.push(Token{Not, string(r)})
+			l.tokens.push(Token{TokenNot, string(r)})
 			seenNot = true
 			continue
 		}
 		if n, w := l.peek(); n == char_range_between {
 			l.seek(w)
-			l.tokens.push(Token{RangeLo, string(r)})
-			l.tokens.push(Token{RangeBetween, string(n)})
+			l.tokens.push(Token{TokenRangeLo, string(r)})
+			l.tokens.push(Token{TokenRangeBetween, string(n)})
 			wantHi = true
 			continue
 		}
@@ -245,6 +281,38 @@ reading:
 		data = append(data, r)
 	}
 	if len(data) > 0 {
-		l.tokens.push(Token{Text, string(data)})
+		l.tokens.push(Token{TokenText, string(data)})
 	}
 }
+
+func IsSpecial(c byte) bool {
+	return bytes.IndexByte(specials, c) != -1
+}
+
+const (
+	charAny            = '*'
+	char_comma         = ','
+	char_single        = '?'
+	char_escape        = '\\'
+	char_range_open    = '['
+	char_range_close   = ']'
+	char_terms_open    = '{'
+	char_terms_close   = '}'
+	char_range_not     = '!'
+	char_range_between = '-'
+)
+
+var specials = []byte{
+	charAny,
+	char_single,
+	char_escape,
+	char_range_open,
+	char_range_close,
+	char_terms_open,
+	char_terms_close,
+}
+
+var (
+	inTextBreakers  = []rune{char_single, charAny, char_range_open, char_terms_open}
+	inTermsBreakers = append(inTextBreakers, char_terms_close, char_comma)
+)

@@ -1,20 +1,18 @@
-package ast
+package syntax
 
 import (
 	"reflect"
 	"testing"
-
-	"github.com/kenshaw/glob/syntax/lexer"
 )
 
 type stubLexer struct {
-	tokens []lexer.Token
+	tokens []Token
 	pos    int
 }
 
-func (s *stubLexer) Next() (ret lexer.Token) {
+func (s *stubLexer) Next() (ret Token) {
 	if s.pos == len(s.tokens) {
-		return lexer.Token{lexer.EOF, ""}
+		return Token{TokenEOF, ""}
 	}
 	ret = s.tokens[s.pos]
 	s.pos++
@@ -23,14 +21,14 @@ func (s *stubLexer) Next() (ret lexer.Token) {
 
 func TestParseString(t *testing.T) {
 	for id, test := range []struct {
-		tokens []lexer.Token
+		tokens []Token
 		tree   *Node
 	}{
 		{
 			// pattern: "abc",
-			tokens: []lexer.Token{
-				{lexer.Text, "abc"},
-				{lexer.EOF, ""},
+			tokens: []Token{
+				{TokenText, "abc"},
+				{TokenEOF, ""},
 			},
 			tree: NewNode(KindPattern, nil,
 				NewNode(KindText, Text{Text: "abc"}),
@@ -38,11 +36,11 @@ func TestParseString(t *testing.T) {
 		},
 		{
 			// pattern: "a*c",
-			tokens: []lexer.Token{
-				{lexer.Text, "a"},
-				{lexer.Any, "*"},
-				{lexer.Text, "c"},
-				{lexer.EOF, ""},
+			tokens: []Token{
+				{TokenText, "a"},
+				{TokenAny, "*"},
+				{TokenText, "c"},
+				{TokenEOF, ""},
 			},
 			tree: NewNode(KindPattern, nil,
 				NewNode(KindText, Text{Text: "a"}),
@@ -52,11 +50,11 @@ func TestParseString(t *testing.T) {
 		},
 		{
 			// pattern: "a**c",
-			tokens: []lexer.Token{
-				{lexer.Text, "a"},
-				{lexer.Super, "**"},
-				{lexer.Text, "c"},
-				{lexer.EOF, ""},
+			tokens: []Token{
+				{TokenText, "a"},
+				{TokenSuper, "**"},
+				{TokenText, "c"},
+				{TokenEOF, ""},
 			},
 			tree: NewNode(KindPattern, nil,
 				NewNode(KindText, Text{Text: "a"}),
@@ -66,11 +64,11 @@ func TestParseString(t *testing.T) {
 		},
 		{
 			// pattern: "a?c",
-			tokens: []lexer.Token{
-				{lexer.Text, "a"},
-				{lexer.Single, "?"},
-				{lexer.Text, "c"},
-				{lexer.EOF, ""},
+			tokens: []Token{
+				{TokenText, "a"},
+				{TokenSingle, "?"},
+				{TokenText, "c"},
+				{TokenEOF, ""},
 			},
 			tree: NewNode(KindPattern, nil,
 				NewNode(KindText, Text{Text: "a"}),
@@ -80,14 +78,14 @@ func TestParseString(t *testing.T) {
 		},
 		{
 			// pattern: "[!a-z]",
-			tokens: []lexer.Token{
-				{lexer.RangeOpen, "["},
-				{lexer.Not, "!"},
-				{lexer.RangeLo, "a"},
-				{lexer.RangeBetween, "-"},
-				{lexer.RangeHi, "z"},
-				{lexer.RangeClose, "]"},
-				{lexer.EOF, ""},
+			tokens: []Token{
+				{TokenRangeOpen, "["},
+				{TokenNot, "!"},
+				{TokenRangeLo, "a"},
+				{TokenRangeBetween, "-"},
+				{TokenRangeHi, "z"},
+				{TokenRangeClose, "]"},
+				{TokenEOF, ""},
 			},
 			tree: NewNode(KindPattern, nil,
 				NewNode(KindRange, Range{Lo: 'a', Hi: 'z', Not: true}),
@@ -95,11 +93,11 @@ func TestParseString(t *testing.T) {
 		},
 		{
 			// pattern: "[az]",
-			tokens: []lexer.Token{
-				{lexer.RangeOpen, "["},
-				{lexer.Text, "az"},
-				{lexer.RangeClose, "]"},
-				{lexer.EOF, ""},
+			tokens: []Token{
+				{TokenRangeOpen, "["},
+				{TokenText, "az"},
+				{TokenRangeClose, "]"},
+				{TokenEOF, ""},
 			},
 			tree: NewNode(KindPattern, nil,
 				NewNode(KindList, List{Chars: "az"}),
@@ -107,13 +105,13 @@ func TestParseString(t *testing.T) {
 		},
 		{
 			// pattern: "{a,z}",
-			tokens: []lexer.Token{
-				{lexer.TermsOpen, "{"},
-				{lexer.Text, "a"},
-				{lexer.Separator, ","},
-				{lexer.Text, "z"},
-				{lexer.TermsClose, "}"},
-				{lexer.EOF, ""},
+			tokens: []Token{
+				{TokenTermsOpen, "{"},
+				{TokenText, "a"},
+				{TokenSeparator, ","},
+				{TokenText, "z"},
+				{TokenTermsClose, "}"},
+				{TokenEOF, ""},
 			},
 			tree: NewNode(KindPattern, nil,
 				NewNode(KindAnyOf, nil,
@@ -128,15 +126,15 @@ func TestParseString(t *testing.T) {
 		},
 		{
 			// pattern: "/{z,ab}*",
-			tokens: []lexer.Token{
-				{lexer.Text, "/"},
-				{lexer.TermsOpen, "{"},
-				{lexer.Text, "z"},
-				{lexer.Separator, ","},
-				{lexer.Text, "ab"},
-				{lexer.TermsClose, "}"},
-				{lexer.Any, "*"},
-				{lexer.EOF, ""},
+			tokens: []Token{
+				{TokenText, "/"},
+				{TokenTermsOpen, "{"},
+				{TokenText, "z"},
+				{TokenSeparator, ","},
+				{TokenText, "ab"},
+				{TokenTermsClose, "}"},
+				{TokenAny, "*"},
+				{TokenEOF, ""},
 			},
 			tree: NewNode(KindPattern, nil,
 				NewNode(KindText, Text{Text: "/"}),
@@ -153,30 +151,30 @@ func TestParseString(t *testing.T) {
 		},
 		{
 			// pattern: "{a,{x,y},?,[a-z],[!qwe]}",
-			tokens: []lexer.Token{
-				{lexer.TermsOpen, "{"},
-				{lexer.Text, "a"},
-				{lexer.Separator, ","},
-				{lexer.TermsOpen, "{"},
-				{lexer.Text, "x"},
-				{lexer.Separator, ","},
-				{lexer.Text, "y"},
-				{lexer.TermsClose, "}"},
-				{lexer.Separator, ","},
-				{lexer.Single, "?"},
-				{lexer.Separator, ","},
-				{lexer.RangeOpen, "["},
-				{lexer.RangeLo, "a"},
-				{lexer.RangeBetween, "-"},
-				{lexer.RangeHi, "z"},
-				{lexer.RangeClose, "]"},
-				{lexer.Separator, ","},
-				{lexer.RangeOpen, "["},
-				{lexer.Not, "!"},
-				{lexer.Text, "qwe"},
-				{lexer.RangeClose, "]"},
-				{lexer.TermsClose, "}"},
-				{lexer.EOF, ""},
+			tokens: []Token{
+				{TokenTermsOpen, "{"},
+				{TokenText, "a"},
+				{TokenSeparator, ","},
+				{TokenTermsOpen, "{"},
+				{TokenText, "x"},
+				{TokenSeparator, ","},
+				{TokenText, "y"},
+				{TokenTermsClose, "}"},
+				{TokenSeparator, ","},
+				{TokenSingle, "?"},
+				{TokenSeparator, ","},
+				{TokenRangeOpen, "["},
+				{TokenRangeLo, "a"},
+				{TokenRangeBetween, "-"},
+				{TokenRangeHi, "z"},
+				{TokenRangeClose, "]"},
+				{TokenSeparator, ","},
+				{TokenRangeOpen, "["},
+				{TokenNot, "!"},
+				{TokenText, "qwe"},
+				{TokenRangeClose, "]"},
+				{TokenTermsClose, "}"},
+				{TokenEOF, ""},
 			},
 			tree: NewNode(KindPattern, nil,
 				NewNode(KindAnyOf, nil,

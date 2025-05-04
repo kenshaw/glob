@@ -1,16 +1,15 @@
-package ast
+package syntax
 
 import (
 	"errors"
 	"fmt"
 	"unicode/utf8"
-
-	"github.com/kenshaw/glob/syntax/lexer"
 )
 
 type Lexer interface {
-	Next() lexer.Token
+	Next() Token
 }
+
 type parseFn func(*Node, Lexer) (parseFn, *Node, error)
 
 func Parse(lexer Lexer) (*Node, error) {
@@ -33,35 +32,35 @@ func parserMain(tree *Node, lex Lexer) (parseFn, *Node, error) {
 	for {
 		token := lex.Next()
 		switch token.Type {
-		case lexer.EOF:
+		case TokenEOF:
 			return nil, tree, nil
-		case lexer.Error:
+		case TokenError:
 			return nil, tree, errors.New(token.Raw)
-		case lexer.Text:
+		case TokenText:
 			Insert(tree, NewNode(KindText, Text{token.Raw}))
 			return parserMain, tree, nil
-		case lexer.Any:
+		case TokenAny:
 			Insert(tree, NewNode(KindAny, nil))
 			return parserMain, tree, nil
-		case lexer.Super:
+		case TokenSuper:
 			Insert(tree, NewNode(KindSuper, nil))
 			return parserMain, tree, nil
-		case lexer.Single:
+		case TokenSingle:
 			Insert(tree, NewNode(KindSingle, nil))
 			return parserMain, tree, nil
-		case lexer.RangeOpen:
+		case TokenRangeOpen:
 			return parserRange, tree, nil
-		case lexer.TermsOpen:
+		case TokenTermsOpen:
 			a := NewNode(KindAnyOf, nil)
 			Insert(tree, a)
 			p := NewNode(KindPattern, nil)
 			Insert(a, p)
 			return parserMain, p, nil
-		case lexer.Separator:
+		case TokenSeparator:
 			p := NewNode(KindPattern, nil)
 			Insert(tree.Parent, p)
 			return parserMain, p, nil
-		case lexer.TermsClose:
+		case TokenTermsClose:
 			return parserMain, tree.Parent.Parent, nil
 		default:
 			return nil, tree, fmt.Errorf("unexpected token: %s", token)
@@ -80,21 +79,21 @@ func parserRange(tree *Node, lex Lexer) (parseFn, *Node, error) {
 	for {
 		token := lex.Next()
 		switch token.Type {
-		case lexer.EOF:
+		case TokenEOF:
 			return nil, tree, errors.New("unexpected end")
-		case lexer.Error:
+		case TokenError:
 			return nil, tree, errors.New(token.Raw)
-		case lexer.Not:
+		case TokenNot:
 			not = true
-		case lexer.RangeLo:
+		case TokenRangeLo:
 			r, w := utf8.DecodeRuneInString(token.Raw)
 			if len(token.Raw) > w {
 				return nil, tree, fmt.Errorf("unexpected length of lo character")
 			}
 			lo = r
-		case lexer.RangeBetween:
+		case TokenRangeBetween:
 			//
-		case lexer.RangeHi:
+		case TokenRangeHi:
 			r, w := utf8.DecodeRuneInString(token.Raw)
 			if len(token.Raw) > w {
 				return nil, tree, fmt.Errorf("unexpected length of lo character")
@@ -103,9 +102,9 @@ func parserRange(tree *Node, lex Lexer) (parseFn, *Node, error) {
 			if hi < lo {
 				return nil, tree, fmt.Errorf("hi character '%s' should be greater than lo '%s'", string(hi), string(lo))
 			}
-		case lexer.Text:
+		case TokenText:
 			chars = token.Raw
-		case lexer.RangeClose:
+		case TokenRangeClose:
 			isRange := lo != 0 && hi != 0
 			isChars := chars != ""
 			if isChars == isRange {

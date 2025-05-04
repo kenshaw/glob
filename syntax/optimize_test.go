@@ -1,11 +1,12 @@
-package ast
+package syntax
 
 import (
+	"strconv"
 	"testing"
 )
 
 func TestCommonChildren(t *testing.T) {
-	for _, test := range []struct {
+	for i, test := range []struct {
 		nodes []*Node
 		left  []*Node
 		right []*Node
@@ -107,7 +108,7 @@ func TestCommonChildren(t *testing.T) {
 			right: []*Node{},
 		},
 	} {
-		t.Run("", func(t *testing.T) {
+		t.Run(strconv.Itoa(i), func(t *testing.T) {
 			left, right := CommonChildren(test.nodes)
 			if !Equal(left, test.left) {
 				t.Errorf(
