@@ -1,4 +1,4 @@
-package compiler
+package glob
 
 import (
 	"reflect"
@@ -324,7 +324,7 @@ func TestCompiler(t *testing.T) {
 		},
 	} {
 		t.Run(test.name, func(t *testing.T) {
-			act, err := Compile(test.ast, test.sep)
+			act, err := CompileTree(test.ast, test.sep)
 			if err != nil {
 				t.Fatalf("compilation error: %s", err)
 			}
