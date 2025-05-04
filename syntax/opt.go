@@ -35,8 +35,8 @@ func minimizeAnyOf(t *Node) *Node {
 		reuse := child.Children[commonLeftCount : len(child.Children)-commonRightCount]
 		var node *Node
 		if len(reuse) == 0 {
-			// this pattern is completely reduced by commonLeft and commonRight patterns
-			// so it become nothing
+			// this pattern is completely reduced by commonLeft and commonRight
+			// patterns so it become nothing
 			node = NewNode(KindNothing, nil)
 		} else {
 			node = NewNode(KindPattern, nil, reuse...)
@@ -86,7 +86,8 @@ func CommonChildren(nodes []*Node) (commonLeft, commonRight []*Node) {
 			restLeft := nodes[k].Children[i]
 			restRight := nodes[k].Children[j+len(nodes[k].Children)-treeLength]
 			breakLeft = breakLeft || !treeLeft.Equal(restLeft)
-			// disable searching for right common parts, if left part is already overlapping
+			// disable searching for right common parts, if left part is
+			// already overlapping
 			breakRight = breakRight || (!breakLeft && j <= i)
 			breakRight = breakRight || !treeRight.Equal(restRight)
 		}
