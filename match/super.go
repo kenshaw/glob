@@ -4,21 +4,21 @@ import (
 	"fmt"
 )
 
-type Super struct{}
+type SuperMatcher struct{}
 
-func NewSuper() Super {
-	return Super{}
+func NewSuper() SuperMatcher {
+	return SuperMatcher{}
 }
 
-func (s Super) Match(_ string) bool {
+func (s SuperMatcher) Match(_ string) bool {
 	return true
 }
 
-func (s Super) Len() int {
+func (s SuperMatcher) Len() int {
 	return 0
 }
 
-func (s Super) Index(v string) (int, []int) {
+func (s SuperMatcher) Index(v string) (int, []int) {
 	seg := acquireSegments(len(v) + 1)
 	for i := range v {
 		seg = append(seg, i)
@@ -27,6 +27,6 @@ func (s Super) Index(v string) (int, []int) {
 	return 0, seg
 }
 
-func (s Super) String() string {
+func (s SuperMatcher) String() string {
 	return fmt.Sprintf("<super>")
 }

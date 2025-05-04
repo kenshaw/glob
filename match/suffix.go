@@ -6,24 +6,24 @@ import (
 	"unicode/utf8"
 )
 
-type Suffix struct {
-	s      string
-	minLen int
+type SuffixMatcher struct {
+	s string
+	n int
 }
 
-func NewSuffix(s string) Suffix {
-	return Suffix{s, utf8.RuneCountInString(s)}
+func NewSuffix(s string) SuffixMatcher {
+	return SuffixMatcher{s, utf8.RuneCountInString(s)}
 }
 
-func (s Suffix) Len() int {
-	return s.minLen
+func (s SuffixMatcher) Len() int {
+	return s.n
 }
 
-func (s Suffix) Match(v string) bool {
+func (s SuffixMatcher) Match(v string) bool {
 	return strings.HasSuffix(v, s.s)
 }
 
-func (s Suffix) Index(v string) (int, []int) {
+func (s SuffixMatcher) Index(v string) (int, []int) {
 	idx := strings.Index(v, s.s)
 	if idx == -1 {
 		return -1, nil
@@ -31,6 +31,6 @@ func (s Suffix) Index(v string) (int, []int) {
 	return 0, []int{idx + len(s.s)}
 }
 
-func (s Suffix) String() string {
+func (s SuffixMatcher) String() string {
 	return fmt.Sprintf("<suffix:%s>", s.s)
 }

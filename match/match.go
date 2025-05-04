@@ -12,12 +12,32 @@ type Matcher interface {
 	Len() int
 }
 
+type Matchers []Matcher
+
+// String satisfies the [fmt.Stringer] interface.
+func (matchers Matchers) String() string {
+	var s []string
+	for _, matcher := range matchers {
+		s = append(s, fmt.Sprint(matcher))
+	}
+	return fmt.Sprintf("%s", strings.Join(s, ","))
+}
+
 type Indexer interface {
 	Index(string) (int, []int)
 }
 
 type Sizer interface {
-	RunesCount() int
+	Size() int
+}
+
+type MatchSizer interface {
+	Matcher
+	Sizer
+}
+
+type Container interface {
+	Content(func(Matcher))
 }
 
 type MatchIndexer interface {
@@ -25,9 +45,17 @@ type MatchIndexer interface {
 	Indexer
 }
 
-type MatchSizer interface {
-	Matcher
-	Sizer
+func MatchIndexers(v []Matcher) ([]MatchIndexer, bool) {
+	for _, m := range v {
+		if _, ok := m.(MatchIndexer); !ok {
+			return nil, false
+		}
+	}
+	r := make([]MatchIndexer, len(v))
+	for i := range r {
+		r[i] = v[i].(MatchIndexer)
+	}
+	return r, true
 }
 
 type MatchIndexSizer interface {
@@ -36,74 +64,45 @@ type MatchIndexSizer interface {
 	Sizer
 }
 
-type Container interface {
-	Content(func(Matcher))
-}
-
-func MatchIndexers(ms []Matcher) ([]MatchIndexer, bool) {
-	for _, m := range ms {
-		if _, ok := m.(MatchIndexer); !ok {
-			return nil, false
-		}
-	}
-	r := make([]MatchIndexer, len(ms))
-	for i := range r {
-		r[i] = ms[i].(MatchIndexer)
-	}
-	return r, true
-}
-
-func MatchIndexSizers(ms []Matcher) ([]MatchIndexSizer, bool) {
-	for _, m := range ms {
+func MatchIndexSizers(v []Matcher) ([]MatchIndexSizer, bool) {
+	for _, m := range v {
 		if _, ok := m.(MatchIndexSizer); !ok {
 			return nil, false
 		}
 	}
-	r := make([]MatchIndexSizer, len(ms))
+	r := make([]MatchIndexSizer, len(v))
 	for i := range r {
-		r[i] = ms[i].(MatchIndexSizer)
+		r[i] = v[i].(MatchIndexSizer)
 	}
 	return r, true
 }
 
-type Matchers []Matcher
-
-func (m Matchers) String() string {
-	var s []string
-	for _, matcher := range m {
-		s = append(s, fmt.Sprint(matcher))
-	}
-	return fmt.Sprintf("%s", strings.Join(s, ","))
-}
-
 // appendMerge merges and sorts given already SORTED and UNIQUE segments.
 func appendMerge(target, sub []int) []int {
-	lt, ls := len(target), len(sub)
-	out := make([]int, 0, lt+ls)
-	for x, y := 0, 0; x < lt || y < ls; {
-		if x >= lt {
-			out = append(out, sub[y:]...)
+	nt, ns := len(target), len(sub)
+	v := make([]int, 0, nt+ns)
+	for i, j := 0, 0; i < nt || j < ns; {
+		if i >= nt {
+			v = append(v, sub[j:]...)
 			break
 		}
-		if y >= ls {
-			out = append(out, target[x:]...)
+		if j >= ns {
+			v = append(v, target[i:]...)
 			break
 		}
-		xValue := target[x]
-		yValue := sub[y]
+		t, s := target[i], sub[j]
 		switch {
-		case xValue == yValue:
-			out = append(out, xValue)
-			x++
-			y++
-		case xValue < yValue:
-			out = append(out, xValue)
-			x++
-		case yValue < xValue:
-			out = append(out, yValue)
-			y++
+		case t == s:
+			v = append(v, t)
+			i++
+			j++
+		case t < s:
+			v = append(v, t)
+			i++
+		case s < t:
+			v = append(v, s)
+			j++
 		}
 	}
-	target = append(target[:0], out...)
-	return target
+	return append(target[:0], v...)
 }

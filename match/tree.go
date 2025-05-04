@@ -8,7 +8,7 @@ import (
 	"github.com/kenshaw/glob/runes"
 )
 
-type Tree struct {
+type TreeMatcher struct {
 	value  MatchIndexer
 	left   Matcher
 	right  Matcher
@@ -18,21 +18,9 @@ type Tree struct {
 	lrunes int
 	rrunes int
 }
-type SizedTree struct {
-	Tree
-}
-type IndexedTree struct {
-	value MatchIndexer
-	left  MatchIndexer
-	right MatchIndexer
-}
-
-func (st SizedTree) RunesCount() int {
-	return st.Tree.runes
-}
 
 func NewTree(v MatchIndexer, l, r Matcher) Matcher {
-	tree := Tree{
+	tree := TreeMatcher{
 		value: v,
 		left:  l,
 		right: r,
@@ -50,28 +38,28 @@ func NewTree(v MatchIndexer, l, r Matcher) Matcher {
 		vs, vsz = v.(Sizer)
 	)
 	if lsz {
-		tree.lrunes = ls.RunesCount()
+		tree.lrunes = ls.Size()
 	}
 	if rsz {
-		tree.rrunes = rs.RunesCount()
+		tree.rrunes = rs.Size()
 	}
 	if vsz {
-		tree.vrunes = vs.RunesCount()
+		tree.vrunes = vs.Size()
 	}
 	// li, lix := l.(MatchIndexer)
 	// ri, rix := r.(MatchIndexer)
 	if vsz && lsz && rsz {
 		tree.runes = tree.vrunes + tree.lrunes + tree.rrunes
-		return SizedTree{tree}
+		return SizedTreeMatcher{tree}
 	}
 	return tree
 }
 
-func (t Tree) Len() int {
+func (t TreeMatcher) Len() int {
 	return t.minLen
 }
 
-func (t Tree) Content(cb func(Matcher)) {
+func (t TreeMatcher) Content(cb func(Matcher)) {
 	if t.left != nil {
 		cb(t.left)
 	}
@@ -81,7 +69,7 @@ func (t Tree) Content(cb func(Matcher)) {
 	}
 }
 
-func (t Tree) Match(s string) (ok bool) {
+func (t TreeMatcher) Match(s string) (ok bool) {
 	if debug.Enabled {
 		done := debug.Matching("tree", s)
 		defer func() { done(ok) }()
@@ -140,7 +128,7 @@ func (t Tree) Match(s string) (ok bool) {
 }
 
 // Returns substring and offset/limit pair in bytes.
-func (t Tree) offsetLimit(s string) (offset, limit int) {
+func (t TreeMatcher) offsetLimit(s string) (offset, limit int) {
 	n := utf8.RuneCountInString(s)
 	if t.runes > n {
 		return 0, 0
@@ -154,9 +142,23 @@ func (t Tree) offsetLimit(s string) (offset, limit int) {
 	return
 }
 
-func (t Tree) String() string {
+func (t TreeMatcher) String() string {
 	return fmt.Sprintf(
 		"<btree:[%v<-%s->%v]>",
 		t.left, t.value, t.right,
 	)
+}
+
+type SizedTreeMatcher struct {
+	TreeMatcher
+}
+
+func (st SizedTreeMatcher) Size() int {
+	return st.TreeMatcher.runes
+}
+
+type IndexedTreeMatcher struct {
+	value MatchIndexer
+	left  MatchIndexer
+	right MatchIndexer
 }

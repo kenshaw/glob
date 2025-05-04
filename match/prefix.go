@@ -6,19 +6,19 @@ import (
 	"unicode/utf8"
 )
 
-type Prefix struct {
-	s       string
-	minSize int
+type PrefixMatcher struct {
+	s string
+	n int
 }
 
-func NewPrefix(p string) Prefix {
-	return Prefix{
-		s:       p,
-		minSize: utf8.RuneCountInString(p),
+func NewPrefix(p string) PrefixMatcher {
+	return PrefixMatcher{
+		s: p,
+		n: utf8.RuneCountInString(p),
 	}
 }
 
-func (p Prefix) Index(s string) (int, []int) {
+func (p PrefixMatcher) Index(s string) (int, []int) {
 	idx := strings.Index(s, p.s)
 	if idx == -1 {
 		return -1, nil
@@ -38,14 +38,14 @@ func (p Prefix) Index(s string) (int, []int) {
 	return idx, segments
 }
 
-func (p Prefix) Len() int {
-	return p.minSize
+func (p PrefixMatcher) Len() int {
+	return p.n
 }
 
-func (p Prefix) Match(s string) bool {
+func (p PrefixMatcher) Match(s string) bool {
 	return strings.HasPrefix(s, p.s)
 }
 
-func (p Prefix) String() string {
+func (p PrefixMatcher) String() string {
 	return fmt.Sprintf("<prefix:%s>", p.s)
 }

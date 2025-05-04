@@ -19,35 +19,35 @@ func Optimize(m Matcher) (opt Matcher) {
 		}()
 	}
 	switch v := m.(type) {
-	case Any:
+	case AnyMatcher:
 		if len(v.sep) == 0 {
 			return NewSuper()
 		}
-	case List:
+	case ListMatcher:
 		if v.not == false && len(v.rs) == 1 {
 			return NewText(string(v.rs))
 		}
 		return m
-	case Tree:
+	case TreeMatcher:
 		v.left = Optimize(v.left)
 		v.right = Optimize(v.right)
-		txt, ok := v.value.(Text)
+		txt, ok := v.value.(TextMatcher)
 		if !ok {
 			return m
 		}
 		var (
-			leftNil  = v.left == nil || v.left == Nothing{}
-			rightNil = v.right == nil || v.right == Nothing{}
+			leftNil  = v.left == nil || v.left == NothingMatcher{}
+			rightNil = v.right == nil || v.right == NothingMatcher{}
 		)
 		if leftNil && rightNil {
 			return NewText(txt.s)
 		}
-		_, leftSuper := v.left.(Super)
-		lp, leftPrefix := v.left.(Prefix)
-		la, leftAny := v.left.(Any)
-		_, rightSuper := v.right.(Super)
-		rs, rightSuffix := v.right.(Suffix)
-		ra, rightAny := v.right.(Any)
+		_, leftSuper := v.left.(SuperMatcher)
+		lp, leftPrefix := v.left.(PrefixMatcher)
+		la, leftAny := v.left.(AnyMatcher)
+		_, rightSuper := v.right.(SuperMatcher)
+		rs, rightSuffix := v.right.(SuffixMatcher)
+		ra, rightAny := v.right.(AnyMatcher)
 		switch {
 		case leftSuper && rightSuper:
 			return NewContains(txt.s)
@@ -109,7 +109,7 @@ func Compile(ms []Matcher) (m Matcher, err error) {
 		if !ok {
 			continue
 		}
-		_, isText := m.(Text)
+		_, isText := m.(TextMatcher)
 		if wantText && !isText {
 			continue
 		}
@@ -130,8 +130,8 @@ func Compile(ms []Matcher) (m Matcher, err error) {
 		right = ms[x+1:]
 	}
 	var (
-		l Matcher = Nothing{}
-		r Matcher = Nothing{}
+		l Matcher = NothingMatcher{}
+		r Matcher = NothingMatcher{}
 	)
 	if len(left) > 0 {
 		l, err = Compile(left)
@@ -187,17 +187,17 @@ func glueMatchersAsEvery(ms []Matcher) Matcher {
 	for i, matcher := range ms {
 		var sep []rune
 		switch m := matcher.(type) {
-		case Super:
+		case SuperMatcher:
 			sep = []rune{}
 			hasSuper = true
-		case Any:
+		case AnyMatcher:
 			sep = m.sep
 			hasAny = true
-		case Single:
+		case SingleMatcher:
 			sep = m.sep
 			hasSingle = true
 			minimum++
-		case List:
+		case ListMatcher:
 			if !m.not {
 				return nil
 			}

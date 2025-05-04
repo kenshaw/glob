@@ -36,7 +36,7 @@ func Graphviz(pattern string, m Matcher) string {
 func graphviz(m Matcher, id string) string {
 	buf := &bytes.Buffer{}
 	switch v := m.(type) {
-	case Tree:
+	case TreeMatcher:
 		fmt.Fprintf(buf, `"%s"[label="%s"];`, id, v.value)
 		for _, m := range []Matcher{v.left, v.right} {
 			switch n := m.(type) {

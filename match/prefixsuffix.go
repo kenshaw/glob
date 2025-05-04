@@ -7,18 +7,18 @@ import (
 	"unicode/utf8"
 )
 
-type PrefixSuffix struct {
+type PrefixSuffixMatcher struct {
 	p, s   string
 	minLen int
 }
 
-func NewPrefixSuffix(p, s string) PrefixSuffix {
+func NewPrefixSuffix(p, s string) PrefixSuffixMatcher {
 	pn := utf8.RuneCountInString(p)
 	sn := utf8.RuneCountInString(s)
-	return PrefixSuffix{p, s, pn + sn}
+	return PrefixSuffixMatcher{p, s, pn + sn}
 }
 
-func (ps PrefixSuffix) Index(s string) (int, []int) {
+func (ps PrefixSuffixMatcher) Index(s string) (int, []int) {
 	prefixIdx := strings.Index(s, ps.p)
 	if prefixIdx == -1 {
 		return -1, nil
@@ -47,14 +47,14 @@ func (ps PrefixSuffix) Index(s string) (int, []int) {
 	return prefixIdx, segments
 }
 
-func (ps PrefixSuffix) Match(s string) bool {
+func (ps PrefixSuffixMatcher) Match(s string) bool {
 	return strings.HasPrefix(s, ps.p) && strings.HasSuffix(s, ps.s)
 }
 
-func (ps PrefixSuffix) Len() int {
+func (ps PrefixSuffixMatcher) Len() int {
 	return ps.minLen
 }
 
-func (ps PrefixSuffix) String() string {
+func (ps PrefixSuffixMatcher) String() string {
 	return fmt.Sprintf("<prefix_suffix:[%s,%s]>", ps.p, ps.s)
 }

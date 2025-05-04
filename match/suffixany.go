@@ -8,17 +8,17 @@ import (
 	"github.com/kenshaw/glob/runes"
 )
 
-type SuffixAny struct {
-	s      string
-	sep    []rune
-	minLen int
+type SuffixAnyMatcher struct {
+	s   string
+	sep []rune
+	n   int
 }
 
-func NewSuffixAny(s string, sep []rune) SuffixAny {
-	return SuffixAny{s, sep, utf8.RuneCountInString(s)}
+func NewSuffixAny(s string, sep []rune) SuffixAnyMatcher {
+	return SuffixAnyMatcher{s, sep, utf8.RuneCountInString(s)}
 }
 
-func (s SuffixAny) Index(v string) (int, []int) {
+func (s SuffixAnyMatcher) Index(v string) (int, []int) {
 	idx := strings.Index(v, s.s)
 	if idx == -1 {
 		return -1, nil
@@ -27,17 +27,17 @@ func (s SuffixAny) Index(v string) (int, []int) {
 	return i, []int{idx + len(s.s) - i}
 }
 
-func (s SuffixAny) Len() int {
-	return s.minLen
+func (s SuffixAnyMatcher) Len() int {
+	return s.n
 }
 
-func (s SuffixAny) Match(v string) bool {
+func (s SuffixAnyMatcher) Match(v string) bool {
 	if !strings.HasSuffix(v, s.s) {
 		return false
 	}
 	return runes.IndexAnyRune(v[:len(v)-len(s.s)], s.sep) == -1
 }
 
-func (s SuffixAny) String() string {
+func (s SuffixAnyMatcher) String() string {
 	return fmt.Sprintf("<suffix_any:![%s]%s>", string(s.sep), s.s)
 }

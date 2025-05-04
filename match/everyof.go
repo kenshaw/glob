@@ -4,7 +4,7 @@ import (
 	"fmt"
 )
 
-type EveryOf struct {
+type EveryOfMatcher struct {
 	ms  []Matcher
 	min int
 }
@@ -17,7 +17,7 @@ func NewEveryOf(ms []Matcher) Matcher {
 			maximum = n
 		}
 	}
-	e := EveryOf{
+	e := EveryOfMatcher{
 		ms:  ms,
 		min: maximum,
 	}
@@ -27,11 +27,11 @@ func NewEveryOf(ms []Matcher) Matcher {
 	return e
 }
 
-func (e EveryOf) Len() (n int) {
+func (e EveryOfMatcher) Len() (n int) {
 	return e.min
 }
 
-func (e EveryOf) Match(s string) bool {
+func (e EveryOfMatcher) Match(s string) bool {
 	for _, m := range e.ms {
 		if !m.Match(s) {
 			return false
@@ -40,18 +40,18 @@ func (e EveryOf) Match(s string) bool {
 	return true
 }
 
-func (e EveryOf) Content(cb func(Matcher)) {
+func (e EveryOfMatcher) Content(cb func(Matcher)) {
 	for _, m := range e.ms {
 		cb(m)
 	}
 }
 
-func (e EveryOf) String() string {
+func (e EveryOfMatcher) String() string {
 	return fmt.Sprintf("<every_of:[%s]>", e.ms)
 }
 
 type IndexedEveryOf struct {
-	EveryOf
+	EveryOfMatcher
 	ms []MatchIndexer
 }
 

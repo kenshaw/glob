@@ -161,7 +161,7 @@ func buildMatch(node *Node, sep []rune) (m match.Matcher, err error) {
 	}
 	switch node.Type {
 	case AnyOf:
-		matchers, err := compileNodes(node.Children, sep)
+		matchers, err := buildNodeMatch(node.Children, sep)
 		if err != nil {
 			return nil, err
 		}
@@ -170,7 +170,7 @@ func buildMatch(node *Node, sep []rune) (m match.Matcher, err error) {
 		if len(node.Children) == 0 {
 			return match.NewNothing(), nil
 		}
-		matchers, err := compileNodes(node.Children, sep)
+		matchers, err := buildNodeMatch(node.Children, sep)
 		if err != nil {
 			return nil, err
 		}
@@ -201,7 +201,7 @@ func buildMatch(node *Node, sep []rune) (m match.Matcher, err error) {
 	return match.Optimize(m), nil
 }
 
-func compileNodes(ns []*Node, sep []rune) ([]match.Matcher, error) {
+func buildNodeMatch(ns []*Node, sep []rune) ([]match.Matcher, error) {
 	var matchers []match.Matcher
 	for _, n := range ns {
 		m, err := buildMatch(n, sep)

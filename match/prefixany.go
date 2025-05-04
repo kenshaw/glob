@@ -8,17 +8,17 @@ import (
 	"github.com/kenshaw/glob/runes"
 )
 
-type PrefixAny struct {
-	s      string
-	sep    []rune
-	minLen int
+type PrefixAnyMatcher struct {
+	s   string
+	sep []rune
+	n   int
 }
 
-func NewPrefixAny(s string, sep []rune) PrefixAny {
-	return PrefixAny{s, sep, utf8.RuneCountInString(s)}
+func NewPrefixAny(s string, sep []rune) PrefixAnyMatcher {
+	return PrefixAnyMatcher{s, sep, utf8.RuneCountInString(s)}
 }
 
-func (p PrefixAny) Index(s string) (int, []int) {
+func (p PrefixAnyMatcher) Index(s string) (int, []int) {
 	idx := strings.Index(s, p.s)
 	if idx == -1 {
 		return -1, nil
@@ -37,17 +37,17 @@ func (p PrefixAny) Index(s string) (int, []int) {
 	return idx, seg
 }
 
-func (p PrefixAny) Len() int {
-	return p.minLen
+func (p PrefixAnyMatcher) Len() int {
+	return p.n
 }
 
-func (p PrefixAny) Match(s string) bool {
+func (p PrefixAnyMatcher) Match(s string) bool {
 	if !strings.HasPrefix(s, p.s) {
 		return false
 	}
 	return runes.IndexAnyRune(s[len(p.s):], p.sep) == -1
 }
 
-func (p PrefixAny) String() string {
+func (p PrefixAnyMatcher) String() string {
 	return fmt.Sprintf("<prefix_any:%s![%s]>", p.s, string(p.sep))
 }

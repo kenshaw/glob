@@ -111,7 +111,7 @@ func TestNode(t *testing.T) {
 					match.NewSingle(sep),
 				}),
 				match.NewAny(sep),
-				match.Nothing{},
+				match.NothingMatcher{},
 			),
 		},
 		{
@@ -127,13 +127,13 @@ func TestNode(t *testing.T) {
 			sep: sep,
 			exp: match.NewTree(
 				match.NewText("/"),
-				match.Nothing{},
+				match.NothingMatcher{},
 				match.NewTree(
 					match.MustIndexedAnyOf(
 						match.NewText("z"),
 						match.NewText("ab"),
 					),
-					match.Nothing{},
+					match.NothingMatcher{},
 					match.NewSuper(),
 				),
 			),
@@ -154,7 +154,7 @@ func TestNode(t *testing.T) {
 					match.NewSingle(sep),
 				}),
 				match.NewSuper(),
-				match.Nothing{},
+				match.NothingMatcher{},
 			),
 		},
 		{
@@ -271,7 +271,7 @@ func TestNode(t *testing.T) {
 			),
 			exp: match.NewTree(
 				match.NewText("abc"),
-				match.Nothing{},
+				match.NothingMatcher{},
 				match.NewAnyOf(
 					match.NewSingle(nil),
 					match.NewList([]rune{'d', 'e', 'f'}, false),
@@ -291,7 +291,7 @@ func TestNode(t *testing.T) {
 					match.NewRange('a', 'z', false),
 					match.NewRange('a', 'x', true),
 				}),
-				match.Nothing{},
+				match.NothingMatcher{},
 				match.NewSuper(),
 			),
 		},

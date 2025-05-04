@@ -5,15 +5,15 @@ import (
 	"unicode/utf8"
 )
 
-type Min struct {
+type MinMatcher struct {
 	n int
 }
 
-func NewMin(n int) Min {
-	return Min{n}
+func NewMin(n int) MinMatcher {
+	return MinMatcher{n}
 }
 
-func (m Min) Match(s string) bool {
+func (m MinMatcher) Match(s string) bool {
 	var n int
 	for range s {
 		n += 1
@@ -24,7 +24,7 @@ func (m Min) Match(s string) bool {
 	return false
 }
 
-func (m Min) Index(s string) (int, []int) {
+func (m MinMatcher) Index(s string) (int, []int) {
 	var count int
 	c := len(s) - m.n + 1
 	if c <= 0 {
@@ -43,10 +43,10 @@ func (m Min) Index(s string) (int, []int) {
 	return 0, segments
 }
 
-func (m Min) Len() int {
+func (m MinMatcher) Len() int {
 	return m.n
 }
 
-func (m Min) String() string {
+func (m MinMatcher) String() string {
 	return fmt.Sprintf("<min:%d>", m.n)
 }

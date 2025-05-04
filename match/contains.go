@@ -5,24 +5,24 @@ import (
 	"strings"
 )
 
-type Contains struct {
+type ContainsMatcher struct {
 	s   string
 	not bool
 }
 
-func NewContains(needle string) Contains {
-	return Contains{needle, false}
+func NewContains(needle string) ContainsMatcher {
+	return ContainsMatcher{needle, false}
 }
 
-func NewNotContains(needle string) Contains {
-	return Contains{needle, true}
+func NewNotContains(needle string) ContainsMatcher {
+	return ContainsMatcher{needle, true}
 }
 
-func (c Contains) Match(s string) bool {
+func (c ContainsMatcher) Match(s string) bool {
 	return strings.Contains(s, c.s) != c.not
 }
 
-func (c Contains) Index(s string) (int, []int) {
+func (c ContainsMatcher) Index(s string) (int, []int) {
 	var offset int
 	idx := strings.Index(s, c.s)
 	if !c.not {
@@ -44,11 +44,11 @@ func (c Contains) Index(s string) (int, []int) {
 	return 0, append(segments, offset+len(s))
 }
 
-func (c Contains) Len() int {
+func (c ContainsMatcher) Len() int {
 	return 0
 }
 
-func (c Contains) String() string {
+func (c ContainsMatcher) String() string {
 	var not string
 	if c.not {
 		not = "!"

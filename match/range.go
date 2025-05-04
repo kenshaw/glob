@@ -7,24 +7,24 @@ import (
 	"github.com/kenshaw/glob/debug"
 )
 
-type Range struct {
+type RangeMatcher struct {
 	Lo, Hi rune
 	Not    bool
 }
 
-func NewRange(lo, hi rune, not bool) Range {
-	return Range{lo, hi, not}
+func NewRange(lo, hi rune, not bool) RangeMatcher {
+	return RangeMatcher{lo, hi, not}
 }
 
-func (self Range) Len() int {
+func (self RangeMatcher) Len() int {
 	return 1
 }
 
-func (self Range) RunesCount() int {
+func (self RangeMatcher) Size() int {
 	return 1
 }
 
-func (self Range) Match(s string) (ok bool) {
+func (self RangeMatcher) Match(s string) (ok bool) {
 	if debug.Enabled {
 		done := debug.Matching("range", s)
 		defer func() { done(ok) }()
@@ -37,7 +37,7 @@ func (self Range) Match(s string) (ok bool) {
 	return inRange == !self.Not
 }
 
-func (self Range) Index(s string) (index int, segments []int) {
+func (self RangeMatcher) Index(s string) (index int, segments []int) {
 	if debug.Enabled {
 		done := debug.Indexing("range", s)
 		defer func() { done(index, segments) }()
@@ -50,7 +50,7 @@ func (self Range) Index(s string) (index int, segments []int) {
 	return -1, nil
 }
 
-func (self Range) String() string {
+func (self RangeMatcher) String() string {
 	var not string
 	if self.Not {
 		not = "!"

@@ -8,15 +8,15 @@ import (
 )
 
 // single represents ?
-type Single struct {
+type SingleMatcher struct {
 	sep []rune
 }
 
-func NewSingle(s []rune) Single {
-	return Single{s}
+func NewSingle(s []rune) SingleMatcher {
+	return SingleMatcher{s}
 }
 
-func (s Single) Match(v string) bool {
+func (s SingleMatcher) Match(v string) bool {
 	r, w := utf8.DecodeRuneInString(v)
 	if len(v) > w {
 		return false
@@ -24,15 +24,15 @@ func (s Single) Match(v string) bool {
 	return runes.IndexRune(s.sep, r) == -1
 }
 
-func (s Single) Len() int {
+func (s SingleMatcher) Len() int {
 	return 1
 }
 
-func (s Single) RunesCount() int {
+func (s SingleMatcher) Size() int {
 	return 1
 }
 
-func (s Single) Index(v string) (int, []int) {
+func (s SingleMatcher) Index(v string) (int, []int) {
 	for i, r := range v {
 		if runes.IndexRune(s.sep, r) == -1 {
 			return i, segmentsByRuneLength[utf8.RuneLen(r)]
@@ -41,7 +41,7 @@ func (s Single) Index(v string) (int, []int) {
 	return -1, nil
 }
 
-func (s Single) String() string {
+func (s SingleMatcher) String() string {
 	if len(s.sep) == 0 {
 		return "<single>"
 	}

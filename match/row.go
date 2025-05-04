@@ -8,25 +8,25 @@ import (
 	"github.com/kenshaw/glob/runes"
 )
 
-type Row struct {
+type RowMatcher struct {
 	ms    []MatchIndexSizer
 	runes int
 	seg   []int
 }
 
-func NewRow(ms []MatchIndexSizer) Row {
+func NewRow(ms []MatchIndexSizer) RowMatcher {
 	var r int
 	for _, m := range ms {
-		r += m.RunesCount()
+		r += m.Size()
 	}
-	return Row{
+	return RowMatcher{
 		ms:    ms,
 		runes: r,
 		seg:   []int{r},
 	}
 }
 
-func (r Row) Match(s string) (ok bool) {
+func (r RowMatcher) Match(s string) (ok bool) {
 	if debug.Enabled {
 		done := debug.Matching("row", s)
 		defer func() { done(ok) }()
@@ -37,15 +37,15 @@ func (r Row) Match(s string) (ok bool) {
 	return r.matchAll(s)
 }
 
-func (r Row) Len() int {
+func (r RowMatcher) Len() int {
 	return r.runes
 }
 
-func (r Row) RunesCount() int {
+func (r RowMatcher) Size() int {
 	return r.runes
 }
 
-func (r Row) Index(s string) (index int, segments []int) {
+func (r RowMatcher) Index(s string) (index int, segments []int) {
 	if debug.Enabled {
 		done := debug.Indexing("row", s)
 		debug.Logf("row: %d vs %d", len(s), r.runes)
@@ -65,20 +65,20 @@ func (r Row) Index(s string) (index int, segments []int) {
 	return -1, nil
 }
 
-func (r Row) Content(cb func(Matcher)) {
+func (r RowMatcher) Content(cb func(Matcher)) {
 	for _, m := range r.ms {
 		cb(m)
 	}
 }
 
-func (r Row) String() string {
+func (r RowMatcher) String() string {
 	return fmt.Sprintf("<row_%d:%s>", r.runes, r.ms)
 }
 
-func (r Row) matchAll(s string) bool {
+func (r RowMatcher) matchAll(s string) bool {
 	var i int
 	for _, m := range r.ms {
-		n := m.RunesCount()
+		n := m.Size()
 		sub := runes.Head(s[i:], n)
 		if !m.Match(sub) {
 			return false

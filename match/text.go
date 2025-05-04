@@ -6,16 +6,16 @@ import (
 	"unicode/utf8"
 )
 
-// raw represents raw string to match
-type Text struct {
+// TextMatcher represents raw string to match
+type TextMatcher struct {
 	s     string
 	runes int
 	bytes int
 	seg   []int
 }
 
-func NewText(s string) Text {
-	return Text{
+func NewText(s string) TextMatcher {
+	return TextMatcher{
 		s:     s,
 		runes: utf8.RuneCountInString(s),
 		bytes: len(s),
@@ -23,11 +23,11 @@ func NewText(s string) Text {
 	}
 }
 
-func (t Text) Match(s string) bool {
+func (t TextMatcher) Match(s string) bool {
 	return t.s == s
 }
 
-func (t Text) Index(s string) (int, []int) {
+func (t TextMatcher) Index(s string) (int, []int) {
 	i := strings.Index(s, t.s)
 	if i == -1 {
 		return -1, nil
@@ -35,18 +35,18 @@ func (t Text) Index(s string) (int, []int) {
 	return i, t.seg
 }
 
-func (t Text) Len() int {
+func (t TextMatcher) Len() int {
 	return t.runes
 }
 
-func (t Text) BytesCount() int {
+func (t TextMatcher) BytesCount() int {
 	return t.bytes
 }
 
-func (t Text) RunesCount() int {
+func (t TextMatcher) Size() int {
 	return t.runes
 }
 
-func (t Text) String() string {
+func (t TextMatcher) String() string {
 	return fmt.Sprintf("<text:`%v`>", t.s)
 }

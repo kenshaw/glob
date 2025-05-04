@@ -6,27 +6,27 @@ import (
 	"github.com/kenshaw/glob/debug"
 )
 
-type AnyOf struct {
-	ms  []Matcher
-	min int
+type AnyOfMatcher struct {
+	v []Matcher
+	n int
 }
 
-func NewAnyOf(ms ...Matcher) Matcher {
+func NewAnyOf(v ...Matcher) Matcher {
 	// determine minimum
 	var minimum int
-	for i, m := range ms {
+	for i, m := range v {
 		n := m.Len()
 		if i == 0 || n < minimum {
 			minimum = n
 		}
 	}
-	a := AnyOf{ms, minimum}
-	if mis, ok := MatchIndexers(ms); ok {
-		x := IndexedAnyOf{a, mis}
-		if msz, ok := MatchIndexSizers(ms); ok {
+	a := AnyOfMatcher{v, minimum}
+	if mis, ok := MatchIndexers(v); ok {
+		x := IndexedAnyOfMatcher{a, mis}
+		if msz, ok := MatchIndexSizers(v); ok {
 			sz := -1
 			for _, m := range msz {
-				n := m.RunesCount()
+				n := m.Size()
 				if sz == -1 {
 					sz = n
 				} else if sz != n {
@@ -35,7 +35,7 @@ func NewAnyOf(ms ...Matcher) Matcher {
 				}
 			}
 			if sz != -1 {
-				return IndexedSizedAnyOf{x, sz}
+				return IndexedSizedAnyOfMatcher{x, sz}
 			}
 		}
 		return x
@@ -43,58 +43,63 @@ func NewAnyOf(ms ...Matcher) Matcher {
 	return a
 }
 
-func MustIndexedAnyOf(ms ...Matcher) MatchIndexer {
-	return NewAnyOf(ms...).(MatchIndexer)
+func MustIndexedAnyOf(v ...Matcher) MatchIndexer {
+	return NewAnyOf(v...).(MatchIndexer)
 }
 
-func MustIndexedSizedAnyOf(ms ...Matcher) MatchIndexSizer {
-	return NewAnyOf(ms...).(MatchIndexSizer)
+func MustIndexedSizedAnyOf(v ...Matcher) MatchIndexSizer {
+	return NewAnyOf(v...).(MatchIndexSizer)
 }
 
-func (a AnyOf) Match(s string) (ok bool) {
+func (a AnyOfMatcher) Match(s string) (ok bool) {
 	if debug.Enabled {
 		done := debug.Matching("any_of", s)
-		defer func() { done(ok) }()
+		defer func() {
+			done(ok)
+		}()
 	}
-	for _, m := range a.ms {
-		if m.Match(s) {
+	for _, matcher := range a.v {
+		if matcher.Match(s) {
 			return true
 		}
 	}
 	return false
 }
 
-func (a AnyOf) Len() (n int) {
-	return a.min
+func (a AnyOfMatcher) Len() (n int) {
+	return a.n
 }
 
-func (a AnyOf) Content(cb func(Matcher)) {
-	for _, m := range a.ms {
-		cb(m)
+func (a AnyOfMatcher) Content(f func(Matcher)) {
+	for _, m := range a.v {
+		f(m)
 	}
 }
 
-func (a AnyOf) String() string {
-	return fmt.Sprintf("<any_of:[%s]>", Matchers(a.ms))
+// String satisfies the [fmt.Stringer] interface.
+func (a AnyOfMatcher) String() string {
+	return fmt.Sprintf("<any_of:[%s]>", Matchers(a.v))
 }
 
-type IndexedAnyOf struct {
-	AnyOf
-	ms []MatchIndexer
+type IndexedAnyOfMatcher struct {
+	AnyOfMatcher
+	v []MatchIndexer
 }
 
-func (a IndexedAnyOf) Index(s string) (index int, segments []int) {
+func (a IndexedAnyOfMatcher) Index(s string) (index int, segments []int) {
 	if debug.Enabled {
 		done := debug.Indexing("any_of", s)
-		defer func() { done(index, segments) }()
+		defer func() {
+			done(index, segments)
+		}()
 	}
 	index = -1
 	segments = acquireSegments(len(s))
-	for _, m := range a.ms {
+	for _, matcher := range a.v {
 		if debug.Enabled {
-			debug.Logf("indexing: any_of: trying %s", m)
+			debug.Logf("indexing: any_of: trying %s", matcher)
 		}
-		i, seg := m.Index(s)
+		i, seg := matcher.Index(s)
 		if i == -1 {
 			continue
 		}
@@ -116,15 +121,15 @@ func (a IndexedAnyOf) Index(s string) (index int, segments []int) {
 	return index, segments
 }
 
-func (a IndexedAnyOf) String() string {
-	return fmt.Sprintf("<indexed_any_of:[%s]>", a.ms)
+func (a IndexedAnyOfMatcher) String() string {
+	return fmt.Sprintf("<indexed_any_of:[%s]>", a.v)
 }
 
-type IndexedSizedAnyOf struct {
-	IndexedAnyOf
+type IndexedSizedAnyOfMatcher struct {
+	IndexedAnyOfMatcher
 	runes int
 }
 
-func (a IndexedSizedAnyOf) RunesCount() int {
+func (a IndexedSizedAnyOfMatcher) Size() int {
 	return a.runes
 }

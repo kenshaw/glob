@@ -7,16 +7,16 @@ import (
 	"github.com/kenshaw/glob/runes"
 )
 
-type List struct {
+type ListMatcher struct {
 	rs  []rune
 	not bool
 }
 
-func NewList(rs []rune, not bool) List {
-	return List{rs, not}
+func NewList(rs []rune, not bool) ListMatcher {
+	return ListMatcher{rs, not}
 }
 
-func (l List) Match(s string) bool {
+func (l ListMatcher) Match(s string) bool {
 	r, w := utf8.DecodeRuneInString(s)
 	if len(s) > w {
 		// Invalid rune.
@@ -26,15 +26,15 @@ func (l List) Match(s string) bool {
 	return inList == !l.not
 }
 
-func (l List) Len() int {
+func (l ListMatcher) Len() int {
 	return 1
 }
 
-func (l List) RunesCount() int {
+func (l ListMatcher) Size() int {
 	return 1
 }
 
-func (l List) Index(s string) (int, []int) {
+func (l ListMatcher) Index(s string) (int, []int) {
 	for i, r := range s {
 		if l.not == (runes.IndexRune(l.rs, r) == -1) {
 			return i, segmentsByRuneLength[utf8.RuneLen(r)]
@@ -43,7 +43,7 @@ func (l List) Index(s string) (int, []int) {
 	return -1, nil
 }
 
-func (l List) String() string {
+func (l ListMatcher) String() string {
 	var not string
 	if l.not {
 		not = "!"

@@ -32,7 +32,7 @@ func TestTree(t *testing.T) {
 			true,
 		},
 		{
-			NewTree(NewText("b"), NewSingle(nil), Nothing{}),
+			NewTree(NewText("b"), NewSingle(nil), NothingMatcher{}),
 			"bbb",
 			false,
 		},
@@ -42,9 +42,9 @@ func TestTree(t *testing.T) {
 				NewTree(
 					NewSingle(nil),
 					NewSuper(),
-					Nothing{},
+					NothingMatcher{},
 				),
-				Nothing{},
+				NothingMatcher{},
 			),
 			"abc",
 			true,
