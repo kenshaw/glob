@@ -16,7 +16,7 @@ func NewRange(lo, hi rune, not bool) Range {
 	return Range{lo, hi, not}
 }
 
-func (self Range) MinLen() int {
+func (self Range) Len() int {
 	return 1
 }
 

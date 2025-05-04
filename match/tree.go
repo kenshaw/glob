@@ -37,12 +37,12 @@ func NewTree(v MatchIndexer, l, r Matcher) Matcher {
 		left:  l,
 		right: r,
 	}
-	tree.minLen = v.MinLen()
+	tree.minLen = v.Len()
 	if l != nil {
-		tree.minLen += l.MinLen()
+		tree.minLen += l.Len()
 	}
 	if r != nil {
-		tree.minLen += r.MinLen()
+		tree.minLen += r.Len()
 	}
 	var (
 		ls, lsz = l.(Sizer)
@@ -67,7 +67,7 @@ func NewTree(v MatchIndexer, l, r Matcher) Matcher {
 	return tree
 }
 
-func (t Tree) MinLen() int {
+func (t Tree) Len() int {
 	return t.minLen
 }
 

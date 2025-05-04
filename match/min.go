@@ -43,7 +43,7 @@ func (m Min) Index(s string) (int, []int) {
 	return 0, segments
 }
 
-func (m Min) MinLen() int {
+func (m Min) Len() int {
 	return m.n
 }
 

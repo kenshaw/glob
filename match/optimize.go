@@ -113,7 +113,7 @@ func Compile(ms []Matcher) (m Matcher, err error) {
 		if wantText && !isText {
 			continue
 		}
-		n := m.MinLen()
+		n := m.Len()
 		if (!wantText && isText) || n > max {
 			max = n
 			x = i
@@ -306,7 +306,7 @@ func nestingDepth(m Matcher) (depth int) {
 
 func maxMinLen(ms []Matcher) (max int) {
 	for _, m := range ms {
-		if n := m.MinLen(); n > max {
+		if n := m.Len(); n > max {
 			max = n
 		}
 	}
@@ -315,7 +315,7 @@ func maxMinLen(ms []Matcher) (max int) {
 
 func sumMinLen(ms []Matcher) (sum int) {
 	for _, m := range ms {
-		sum += m.MinLen()
+		sum += m.Len()
 	}
 	return sum
 }

@@ -27,7 +27,7 @@ func (s SuffixAny) Index(v string) (int, []int) {
 	return i, []int{idx + len(s.s) - i}
 }
 
-func (s SuffixAny) MinLen() int {
+func (s SuffixAny) Len() int {
 	return s.minLen
 }
 

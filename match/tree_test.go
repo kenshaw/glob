@@ -78,7 +78,7 @@ func (f *fakeMatcher) Index(s string) (int, []int) {
 	return 0, seg
 }
 
-func (f *fakeMatcher) MinLen() int {
+func (f *fakeMatcher) Len() int {
 	return f.len
 }
 

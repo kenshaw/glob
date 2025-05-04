@@ -14,7 +14,7 @@ func (s Super) Match(_ string) bool {
 	return true
 }
 
-func (s Super) MinLen() int {
+func (s Super) Len() int {
 	return 0
 }
 

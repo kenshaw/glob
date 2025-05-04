@@ -44,7 +44,7 @@ func (c Contains) Index(s string) (int, []int) {
 	return 0, append(segments, offset+len(s))
 }
 
-func (c Contains) MinLen() int {
+func (c Contains) Len() int {
 	return 0
 }
 

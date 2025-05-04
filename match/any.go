@@ -35,7 +35,7 @@ func (a Any) Index(s string) (int, []int) {
 	return 0, segments
 }
 
-func (a Any) MinLen() int {
+func (a Any) Len() int {
 	return 0
 }
 

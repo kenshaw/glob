@@ -15,7 +15,7 @@ func NewSuffix(s string) Suffix {
 	return Suffix{s, utf8.RuneCountInString(s)}
 }
 
-func (s Suffix) MinLen() int {
+func (s Suffix) Len() int {
 	return s.minLen
 }
 

@@ -37,7 +37,7 @@ func (r Row) Match(s string) (ok bool) {
 	return r.matchAll(s)
 }
 
-func (r Row) MinLen() int {
+func (r Row) Len() int {
 	return r.runes
 }
 

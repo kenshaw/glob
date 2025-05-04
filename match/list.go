@@ -26,7 +26,7 @@ func (l List) Match(s string) bool {
 	return inList == !l.not
 }
 
-func (l List) MinLen() int {
+func (l List) Len() int {
 	return 1
 }
 

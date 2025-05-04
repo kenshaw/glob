@@ -37,7 +37,7 @@ func (p PrefixAny) Index(s string) (int, []int) {
 	return idx, seg
 }
 
-func (p PrefixAny) MinLen() int {
+func (p PrefixAny) Len() int {
 	return p.minLen
 }
 

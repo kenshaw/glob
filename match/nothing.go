@@ -18,7 +18,7 @@ func (self Nothing) Index(s string) (int, []int) {
 	return 0, segments0
 }
 
-func (self Nothing) MinLen() int {
+func (self Nothing) Len() int {
 	return 0
 }
 

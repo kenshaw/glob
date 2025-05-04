@@ -9,7 +9,7 @@ import (
 
 type Matcher interface {
 	Match(string) bool
-	MinLen() int
+	Len() int
 }
 
 type Indexer interface {

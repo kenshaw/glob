@@ -24,7 +24,7 @@ func (s Single) Match(v string) bool {
 	return runes.IndexRune(s.sep, r) == -1
 }
 
-func (s Single) MinLen() int {
+func (s Single) Len() int {
 	return 1
 }
 

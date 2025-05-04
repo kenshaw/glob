@@ -12,7 +12,15 @@ type AnyOf struct {
 }
 
 func NewAnyOf(ms ...Matcher) Matcher {
-	a := AnyOf{ms, minLen(ms)}
+	// determine minimum
+	var minimum int
+	for i, m := range ms {
+		n := m.Len()
+		if i == 0 || n < minimum {
+			minimum = n
+		}
+	}
+	a := AnyOf{ms, minimum}
 	if mis, ok := MatchIndexers(ms); ok {
 		x := IndexedAnyOf{a, mis}
 		if msz, ok := MatchIndexSizers(ms); ok {
@@ -56,7 +64,7 @@ func (a AnyOf) Match(s string) (ok bool) {
 	return false
 }
 
-func (a AnyOf) MinLen() (n int) {
+func (a AnyOf) Len() (n int) {
 	return a.min
 }
 

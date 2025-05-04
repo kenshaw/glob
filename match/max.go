@@ -38,7 +38,7 @@ func (m Max) Index(s string) (int, []int) {
 	return 0, segments
 }
 
-func (m Max) MinLen() int {
+func (m Max) Len() int {
 	return 0
 }
 

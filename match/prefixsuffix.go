@@ -51,7 +51,7 @@ func (ps PrefixSuffix) Match(s string) bool {
 	return strings.HasPrefix(s, ps.p) && strings.HasSuffix(s, ps.s)
 }
 
-func (ps PrefixSuffix) MinLen() int {
+func (ps PrefixSuffix) Len() int {
 	return ps.minLen
 }
 

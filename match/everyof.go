@@ -10,9 +10,16 @@ type EveryOf struct {
 }
 
 func NewEveryOf(ms []Matcher) Matcher {
+	maximum := 0
+	for i, m := range ms {
+		n := m.Len()
+		if i == 0 || n > maximum {
+			maximum = n
+		}
+	}
 	e := EveryOf{
 		ms:  ms,
-		min: maxLen(ms),
+		min: maximum,
 	}
 	if mis, ok := MatchIndexers(ms); ok {
 		return IndexedEveryOf{e, mis}
@@ -20,7 +27,7 @@ func NewEveryOf(ms []Matcher) Matcher {
 	return e
 }
 
-func (e EveryOf) MinLen() (n int) {
+func (e EveryOf) Len() (n int) {
 	return e.min
 }
 

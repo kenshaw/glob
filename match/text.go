@@ -35,7 +35,7 @@ func (t Text) Index(s string) (int, []int) {
 	return i, t.seg
 }
 
-func (t Text) MinLen() int {
+func (t Text) Len() int {
 	return t.runes
 }
 
