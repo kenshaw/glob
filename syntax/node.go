@@ -3,9 +3,6 @@ package syntax
 import (
 	"bytes"
 	"fmt"
-
-	"github.com/kenshaw/glob/debug"
-	"github.com/kenshaw/glob/match"
 )
 
 type Type int
@@ -74,7 +71,7 @@ func (node *Node) Insert(children ...*Node) {
 }
 
 // Match builds the matcher for the node.
-func (node *Node) Match(sep []rune) (match.Matcher, error) {
+func (node *Node) Match(sep []rune) (Matcher, error) {
 	return buildMatch(node, sep)
 }
 
@@ -130,29 +127,29 @@ type TextData struct {
 // TODO use constructor with all matchers, and to their structs private
 // TODO glue multiple Text nodes (like after QuoteMeta)
 
-func buildMatch(node *Node, sep []rune) (m match.Matcher, err error) {
-	if debug.Enabled {
-		debug.EnterPrefix("compiler: compiling %s", node)
+func buildMatch(node *Node, sep []rune) (m Matcher, err error) {
+	if debugEnabled {
+		debugEnterPrefix("compiler: compiling %s", node)
 		defer func() {
 			if err != nil {
-				debug.Logf("->! %v", err)
+				debugLogf("->! %v", err)
 			} else {
-				debug.Logf("-> %s", m)
+				debugLogf("-> %s", m)
 			}
-			debug.LeavePrefix()
+			debugLeavePrefix()
 		}()
 	}
 	// todo this could be faster on pattern_alternatives_combine_lite (see glob_test.go)
 	if n := Minimize(node); n != nil {
-		debug.Logf("minimized tree -> %s", node, n)
+		debugLogf("minimized tree -> %s", node, n)
 		r, err := buildMatch(n, sep)
-		if debug.Enabled {
+		if debugEnabled {
 			if err != nil {
-				debug.Logf("compiler: compile minimized tree failed: %v", err)
+				debugLogf("compiler: compile minimized tree failed: %v", err)
 			} else {
-				debug.Logf("compiler: minimized tree")
-				debug.Logf("compiler: \t%s", node)
-				debug.Logf("compiler: \t%s", n)
+				debugLogf("compiler: minimized tree")
+				debugLogf("compiler: \t%s", node)
+				debugLogf("compiler: \t%s", n)
 			}
 		}
 		if err == nil {
@@ -165,44 +162,44 @@ func buildMatch(node *Node, sep []rune) (m match.Matcher, err error) {
 		if err != nil {
 			return nil, err
 		}
-		return match.NewAnyOf(matchers...), nil
+		return NewAnyOf(matchers...), nil
 	case Pattern:
 		if len(node.Children) == 0 {
-			return match.NewNothing(), nil
+			return NewNothing(), nil
 		}
 		matchers, err := buildNodeMatch(node.Children, sep)
 		if err != nil {
 			return nil, err
 		}
-		m, err = match.Compile(match.Minimize(matchers))
+		m, err = BuildMatcher(MinimizeMatcher(matchers))
 		if err != nil {
 			return nil, err
 		}
 	case Any:
-		m = match.NewAny(sep)
+		m = NewAny(sep)
 	case Super:
-		m = match.NewSuper()
+		m = NewSuper()
 	case Single:
-		m = match.NewSingle(sep)
+		m = NewSingle(sep)
 	case Nothing:
-		m = match.NewNothing()
+		m = NewNothing()
 	case List:
 		l := node.Value.(ListData)
-		m = match.NewList([]rune(l.Chars), l.Not)
+		m = NewList([]rune(l.Chars), l.Not)
 	case Range:
 		r := node.Value.(RangeData)
-		m = match.NewRange(r.Lo, r.Hi, r.Not)
+		m = NewRange(r.Lo, r.Hi, r.Not)
 	case Text:
 		t := node.Value.(TextData)
-		m = match.NewText(t.Text)
+		m = NewText(t.Text)
 	default:
 		return nil, fmt.Errorf("could not compile tree: unknown node type %s (%d)", node.Type, int(node.Type))
 	}
-	return match.Optimize(m), nil
+	return Optimize(m), nil
 }
 
-func buildNodeMatch(ns []*Node, sep []rune) ([]match.Matcher, error) {
-	var matchers []match.Matcher
+func buildNodeMatch(ns []*Node, sep []rune) ([]Matcher, error) {
+	var matchers []Matcher
 	for _, n := range ns {
 		m, err := buildMatch(n, sep)
 		if err != nil {

@@ -1,7 +1,6 @@
 //go:build globdebug
-// +build globdebug
 
-package debug
+package syntax
 
 import (
 	"fmt"
@@ -9,14 +8,14 @@ import (
 	"strings"
 )
 
-const Enabled = true
+const debugEnabled = true
 
 var (
 	i      = 0
 	prefix = map[int]string{}
 )
 
-func Logf(f string, args ...interface{}) {
+func debugLogf(f string, args ...interface{}) {
 	if f != "" && prefix[i] != "" {
 		f = ": " + f
 	}
@@ -29,7 +28,7 @@ func Logf(f string, args ...interface{}) {
 	)
 }
 
-func Indexing(name, s string) func(int, []int) {
+func debugIndexing(name, s string) func(int, []int) {
 	EnterPrefix("%s: index: %q", name, s)
 	return func(index int, segments []int) {
 		Logf("-> %d, %v", index, segments)
@@ -37,7 +36,7 @@ func Indexing(name, s string) func(int, []int) {
 	}
 }
 
-func Matching(name, s string) func(bool) {
+func debugMatching(name, s string) func(bool) {
 	EnterPrefix("%s: match %q", name, s)
 	return func(ok bool) {
 		Logf("-> %t", ok)
@@ -45,21 +44,21 @@ func Matching(name, s string) func(bool) {
 	}
 }
 
-func EnterPrefix(s string, args ...interface{}) {
+func debugEnterPrefix(s string, args ...interface{}) {
 	Enter()
 	prefix[i] = fmt.Sprintf(s, args...)
 	Logf("")
 }
 
-func LeavePrefix() {
+func debugLeavePrefix() {
 	prefix[i] = ""
 	Leave()
 }
 
-func Enter() {
+func debugEnter() {
 	i++
 }
 
-func Leave() {
+func debugLeave() {
 	i--
 }

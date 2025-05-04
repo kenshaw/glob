@@ -10,7 +10,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/kenshaw/glob"
-	"github.com/kenshaw/glob/match"
+	"github.com/kenshaw/glob/syntax"
 )
 
 func main() {
@@ -67,7 +67,7 @@ func run(pattern, sep, filepath string, auto bool, offset int) error {
 		if err != nil {
 			return fmt.Errorf("could not compile pattern %+q: %w", p, err)
 		}
-		s := match.Graphviz(p, g)
+		s := syntax.Graphviz(p, g)
 		if auto {
 			fmt.Fprintf(os.Stdout, "pattern: %+q: ", p)
 			if err := open(s); err != nil {

@@ -4,13 +4,12 @@ package glob
 import (
 	"fmt"
 
-	"github.com/kenshaw/glob/match"
 	"github.com/kenshaw/glob/syntax"
 )
 
 // Glob matches glob patterns.
 type Glob struct {
-	match.Matcher
+	syntax.Matcher
 }
 
 // String satisfies the [fmt.Stringer] interface.

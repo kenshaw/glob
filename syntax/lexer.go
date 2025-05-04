@@ -4,8 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"unicode/utf8"
-
-	"github.com/kenshaw/glob/runes"
 )
 
 type TokenType int
@@ -269,7 +267,7 @@ loop:
 				escaped = true
 				continue
 			}
-			if runes.IndexRune(breakers, r) != -1 {
+			if runesIndexRune(breakers, r) != -1 {
 				l.unread()
 				break loop
 			}

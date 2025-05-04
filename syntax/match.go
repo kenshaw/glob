@@ -1,20 +1,163 @@
-package match
+package syntax
 
 import (
+	"bytes"
 	"fmt"
-
-	"github.com/kenshaw/glob/debug"
-	"github.com/kenshaw/glob/runes"
+	"math/rand"
+	"strings"
 )
 
+// todo common table of rune's length
+
+type Matcher interface {
+	Match(string) bool
+	Len() int
+}
+
+type Matchers []Matcher
+
+// String satisfies the [fmt.Stringer] interface.
+func (matchers Matchers) String() string {
+	var s []string
+	for _, matcher := range matchers {
+		s = append(s, fmt.Sprint(matcher))
+	}
+	return fmt.Sprintf("%s", strings.Join(s, ","))
+}
+
+type Indexer interface {
+	Index(string) (int, []int)
+}
+
+type Sizer interface {
+	Size() int
+}
+
+type MatchSizer interface {
+	Matcher
+	Sizer
+}
+
+type Container interface {
+	Content(func(Matcher))
+}
+
+type MatchIndexer interface {
+	Matcher
+	Indexer
+}
+
+func MatchIndexers(v []Matcher) ([]MatchIndexer, bool) {
+	for _, m := range v {
+		if _, ok := m.(MatchIndexer); !ok {
+			return nil, false
+		}
+	}
+	r := make([]MatchIndexer, len(v))
+	for i := range r {
+		r[i] = v[i].(MatchIndexer)
+	}
+	return r, true
+}
+
+type MatchIndexSizer interface {
+	Matcher
+	Indexer
+	Sizer
+}
+
+func MatchIndexSizers(v []Matcher) ([]MatchIndexSizer, bool) {
+	for _, m := range v {
+		if _, ok := m.(MatchIndexSizer); !ok {
+			return nil, false
+		}
+	}
+	r := make([]MatchIndexSizer, len(v))
+	for i := range r {
+		r[i] = v[i].(MatchIndexSizer)
+	}
+	return r, true
+}
+
+func Graphviz(pattern string, m Matcher) string {
+	return fmt.Sprintf(`digraph G {graph[label="%s"];%s}`, pattern, graphviz(m, fmt.Sprintf("%x", rand.Int63())))
+}
+
+func BuildMatcher(matchers []Matcher) (m Matcher, err error) {
+	if debugEnabled {
+		debugEnterPrefix("compiling %s", matchers)
+		defer func() {
+			debugLogf("-> %s, %v", m, err)
+			debugLeavePrefix()
+		}()
+	}
+	if len(matchers) == 0 {
+		return nil, fmt.Errorf("compile error: need at least one matcher")
+	}
+	if len(matchers) == 1 {
+		return matchers[0], nil
+	}
+	if m := glueMatchers(matchers); m != nil {
+		return m, nil
+	}
+	var (
+		x        = -1
+		max      = -2
+		wantText bool
+		indexer  MatchIndexer
+	)
+	for i, m := range matchers {
+		mx, ok := m.(MatchIndexer)
+		if !ok {
+			continue
+		}
+		_, isText := m.(TextMatcher)
+		if wantText && !isText {
+			continue
+		}
+		n := m.Len()
+		if (!wantText && isText) || n > max {
+			max = n
+			x = i
+			indexer = mx
+			wantText = isText
+		}
+	}
+	if indexer == nil {
+		return nil, fmt.Errorf("can not index on matchers")
+	}
+	left := matchers[:x]
+	var right []Matcher
+	if len(matchers) > x+1 {
+		right = matchers[x+1:]
+	}
+	var (
+		l Matcher = NothingMatcher{}
+		r Matcher = NothingMatcher{}
+	)
+	if len(left) > 0 {
+		l, err = BuildMatcher(left)
+		if err != nil {
+			return nil, err
+		}
+	}
+	if len(right) > 0 {
+		r, err = BuildMatcher(right)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return NewTree(indexer, l, r), nil
+}
+
 func Optimize(m Matcher) (opt Matcher) {
-	if debug.Enabled {
+	if debugEnabled {
 		defer func() {
 			a := fmt.Sprintf("%s", m)
 			b := fmt.Sprintf("%s", opt)
 			if a != b {
-				debug.EnterPrefix("optimized %s: -> %s", a, b)
-				debug.LeavePrefix()
+				debugEnterPrefix("optimized %s: -> %s", a, b)
+				debugLeavePrefix()
 			}
 		}()
 	}
@@ -81,73 +224,6 @@ func Optimize(m Matcher) (opt Matcher) {
 	return m
 }
 
-func Compile(ms []Matcher) (m Matcher, err error) {
-	if debug.Enabled {
-		debug.EnterPrefix("compiling %s", ms)
-		defer func() {
-			debug.Logf("-> %s, %v", m, err)
-			debug.LeavePrefix()
-		}()
-	}
-	if len(ms) == 0 {
-		return nil, fmt.Errorf("compile error: need at least one matcher")
-	}
-	if len(ms) == 1 {
-		return ms[0], nil
-	}
-	if m := glueMatchers(ms); m != nil {
-		return m, nil
-	}
-	var (
-		x        = -1
-		max      = -2
-		wantText bool
-		indexer  MatchIndexer
-	)
-	for i, m := range ms {
-		mx, ok := m.(MatchIndexer)
-		if !ok {
-			continue
-		}
-		_, isText := m.(TextMatcher)
-		if wantText && !isText {
-			continue
-		}
-		n := m.Len()
-		if (!wantText && isText) || n > max {
-			max = n
-			x = i
-			indexer = mx
-			wantText = isText
-		}
-	}
-	if indexer == nil {
-		return nil, fmt.Errorf("can not index on matchers")
-	}
-	left := ms[:x]
-	var right []Matcher
-	if len(ms) > x+1 {
-		right = ms[x+1:]
-	}
-	var (
-		l Matcher = NothingMatcher{}
-		r Matcher = NothingMatcher{}
-	)
-	if len(left) > 0 {
-		l, err = Compile(left)
-		if err != nil {
-			return nil, err
-		}
-	}
-	if len(right) > 0 {
-		r, err = Compile(right)
-		if err != nil {
-			return nil, err
-		}
-	}
-	return NewTree(indexer, l, r), nil
-}
-
 func glueMatchers(ms []Matcher) Matcher {
 	if m := glueMatchersAsEvery(ms); m != nil {
 		return m
@@ -211,7 +287,7 @@ func glueMatchersAsEvery(ms []Matcher) Matcher {
 		if i == 0 {
 			separator = sep
 		}
-		if runes.Equal(sep, separator) {
+		if runesEqual(sep, separator) {
 			continue
 		}
 		return nil
@@ -329,7 +405,7 @@ func maxNestingDepth(ms []Matcher) (max int) {
 	return
 }
 
-func minimize(ms []Matcher, i, j int, best *result) *result {
+func minimizeMatcher(ms []Matcher, i, j int, best *result) *result {
 	if j > len(ms) {
 		j = 0
 		i++
@@ -349,8 +425,8 @@ func minimize(ms []Matcher, i, j int, best *result) *result {
 			maxMinLen: maxMinLen(cp),
 			nesting:   maxNestingDepth(cp),
 		}
-		if debug.Enabled {
-			debug.EnterPrefix(
+		if debugEnabled {
+			debugEnterPrefix(
 				"intermediate: %s (matchers:%d, summinlen:%d, maxminlen:%d, nesting:%d)",
 				cp, r.matchers, r.sumMinLen, r.maxMinLen, r.nesting,
 			)
@@ -360,29 +436,89 @@ func minimize(ms []Matcher, i, j int, best *result) *result {
 		}
 		if best.ms == nil || compareResult(r, *best) < 0 {
 			*best = r
-			if debug.Enabled {
-				debug.Logf("new best result")
+			if debugEnabled {
+				debugLogf("new best result")
 			}
 		}
-		best = minimize(cp, 0, 0, best)
-		if debug.Enabled {
-			debug.LeavePrefix()
+		best = minimizeMatcher(cp, 0, 0, best)
+		if debugEnabled {
+			debugLeavePrefix()
 		}
 	}
-	return minimize(ms, i, j+1, best)
+	return minimizeMatcher(ms, i, j+1, best)
 }
 
-func Minimize(ms []Matcher) (m []Matcher) {
-	if debug.Enabled {
-		debug.EnterPrefix("minimizing %s", ms)
+func MinimizeMatcher(ms []Matcher) (m []Matcher) {
+	if debugEnabled {
+		debugEnterPrefix("minimizing %s", ms)
 		defer func() {
-			debug.Logf("-> %s", m)
-			debug.LeavePrefix()
+			debugLogf("-> %s", m)
+			debugLeavePrefix()
 		}()
 	}
-	best := minimize(ms, 0, 0, nil)
+	best := minimizeMatcher(ms, 0, 0, nil)
 	if best == nil {
 		return ms
 	}
 	return best.ms
+}
+
+func graphviz(m Matcher, id string) string {
+	buf := &bytes.Buffer{}
+	switch v := m.(type) {
+	case TreeMatcher:
+		fmt.Fprintf(buf, `"%s"[label="%s"];`, id, v.value)
+		for _, m := range []Matcher{v.left, v.right} {
+			switch n := m.(type) {
+			case nil:
+				rnd := rand.Int63()
+				fmt.Fprintf(buf, `"%x"[label="<nil>"];`, rnd)
+				fmt.Fprintf(buf, `"%s"->"%x";`, id, rnd)
+			default:
+				sub := fmt.Sprintf("%x", rand.Int63())
+				fmt.Fprintf(buf, `"%s"->"%s";`, id, sub)
+				fmt.Fprint(buf, graphviz(n, sub))
+			}
+		}
+	case Container:
+		fmt.Fprintf(buf, `"%s"[label="Container(%T)"];`, id, m)
+		v.Content(func(m Matcher) {
+			rnd := rand.Int63()
+			fmt.Fprint(buf, graphviz(m, fmt.Sprintf("%x", rnd)))
+			fmt.Fprintf(buf, `"%s"->"%x";`, id, rnd)
+		})
+	default:
+		fmt.Fprintf(buf, `"%s"[label="%s"];`, id, m)
+	}
+	return buf.String()
+}
+
+// appendMerge merges and sorts given already SORTED and UNIQUE segments.
+func appendMerge(target, sub []int) []int {
+	nt, ns := len(target), len(sub)
+	v := make([]int, 0, nt+ns)
+	for i, j := 0, 0; i < nt || j < ns; {
+		if i >= nt {
+			v = append(v, sub[j:]...)
+			break
+		}
+		if j >= ns {
+			v = append(v, target[i:]...)
+			break
+		}
+		t, s := target[i], sub[j]
+		switch {
+		case t == s:
+			v = append(v, t)
+			i++
+			j++
+		case t < s:
+			v = append(v, t)
+			i++
+		case s < t:
+			v = append(v, s)
+			j++
+		}
+	}
+	return append(target[:0], v...)
 }

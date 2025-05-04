@@ -1,4 +1,4 @@
-package match
+package syntax
 
 import (
 	"fmt"
@@ -6,9 +6,6 @@ import (
 	"strings"
 	"sync"
 	"unicode/utf8"
-
-	"github.com/kenshaw/glob/debug"
-	"github.com/kenshaw/glob/runes"
 )
 
 type AnyMatcher struct {
@@ -20,11 +17,11 @@ func NewAny(s []rune) AnyMatcher {
 }
 
 func (m AnyMatcher) Match(s string) bool {
-	return runes.IndexAnyRune(s, m.sep) == -1
+	return runesIndexAnyRune(s, m.sep) == -1
 }
 
 func (m AnyMatcher) Index(s string) (int, []int) {
-	switch i := runes.IndexAnyRune(s, m.sep); i {
+	switch i := runesIndexAnyRune(s, m.sep); i {
 	case -1:
 	case 0:
 		return 0, segments0
@@ -92,8 +89,8 @@ func MustIndexedSizedAnyOf(v ...Matcher) MatchIndexSizer {
 }
 
 func (m AnyOfMatcher) Match(s string) (ok bool) {
-	if debug.Enabled {
-		done := debug.Matching("any_of", s)
+	if debugEnabled {
+		done := debugMatching("any_of", s)
 		defer func() {
 			done(ok)
 		}()
@@ -127,8 +124,8 @@ type IndexedAnyOfMatcher struct {
 }
 
 func (m IndexedAnyOfMatcher) Index(s string) (index int, segments []int) {
-	if debug.Enabled {
-		done := debug.Indexing("any_of", s)
+	if debugEnabled {
+		done := debugIndexing("any_of", s)
 		defer func() {
 			done(index, segments)
 		}()
@@ -136,8 +133,8 @@ func (m IndexedAnyOfMatcher) Index(s string) (index int, segments []int) {
 	index = -1
 	segments = acquireSegments(len(s))
 	for _, matcher := range m.v {
-		if debug.Enabled {
-			debug.Logf("indexing: any_of: trying %s", matcher)
+		if debugEnabled {
+			debugLogf("indexing: any_of: trying %s", matcher)
 		}
 		i, seg := matcher.Index(s)
 		if i == -1 {
@@ -345,7 +342,7 @@ func (m ListMatcher) Match(s string) bool {
 		// Invalid rune.
 		return false
 	}
-	inList := runes.IndexRune(m.rs, r) != -1
+	inList := runesIndexRune(m.rs, r) != -1
 	return inList == !m.not
 }
 
@@ -359,7 +356,7 @@ func (ListMatcher) Size() int {
 
 func (m ListMatcher) Index(s string) (int, []int) {
 	for i, r := range s {
-		if m.not == (runes.IndexRune(m.rs, r) == -1) {
+		if m.not == (runesIndexRune(m.rs, r) == -1) {
 			return i, segmentsByRuneLength[utf8.RuneLen(r)]
 		}
 	}
@@ -508,7 +505,7 @@ func (m PrefixAnyMatcher) Index(s string) (int, []int) {
 	}
 	n := len(m.s)
 	sub := s[idx+n:]
-	i := runes.IndexAnyRune(sub, m.sep)
+	i := runesIndexAnyRune(sub, m.sep)
 	if i > -1 {
 		sub = sub[:i]
 	}
@@ -528,7 +525,7 @@ func (m PrefixAnyMatcher) Match(s string) bool {
 	if !strings.HasPrefix(s, m.s) {
 		return false
 	}
-	return runes.IndexAnyRune(s[len(m.s):], m.sep) == -1
+	return runesIndexAnyRune(s[len(m.s):], m.sep) == -1
 }
 
 // String satisfies the [fmt.Stringer] interface.
@@ -652,8 +649,8 @@ func (RangeMatcher) Size() int {
 }
 
 func (m RangeMatcher) Match(s string) (ok bool) {
-	if debug.Enabled {
-		done := debug.Matching("range", s)
+	if debugEnabled {
+		done := debugMatching("range", s)
 		defer func() { done(ok) }()
 	}
 	r, w := utf8.DecodeRuneInString(s)
@@ -665,8 +662,8 @@ func (m RangeMatcher) Match(s string) (ok bool) {
 }
 
 func (m RangeMatcher) Index(s string) (index int, segments []int) {
-	if debug.Enabled {
-		done := debug.Indexing("range", s)
+	if debugEnabled {
+		done := debugIndexing("range", s)
 		defer func() { done(index, segments) }()
 	}
 	for i, r := range s {
@@ -705,11 +702,11 @@ func NewRow(ms []MatchIndexSizer) RowMatcher {
 }
 
 func (m RowMatcher) Match(s string) (ok bool) {
-	if debug.Enabled {
-		done := debug.Matching("row", s)
+	if debugEnabled {
+		done := debugMatching("row", s)
 		defer func() { done(ok) }()
 	}
-	if !runes.ExactlyRunesCount(s, m.n) {
+	if !runesExactlyRunesCount(s, m.n) {
 		return false
 	}
 	return m.matchAll(s)
@@ -724,9 +721,9 @@ func (m RowMatcher) Size() int {
 }
 
 func (m RowMatcher) Index(s string) (index int, segments []int) {
-	if debug.Enabled {
-		done := debug.Indexing("row", s)
-		debug.Logf("row: %d vs %d", len(s), m.n)
+	if debugEnabled {
+		done := debugIndexing("row", s)
+		debugLogf("row: %d vs %d", len(s), m.n)
 		defer func() { done(index, segments) }()
 	}
 	for j := 0; j <= len(s)-m.n; { // NOTE: using len() here to avoid counting runes.
@@ -758,7 +755,7 @@ func (m RowMatcher) matchAll(s string) bool {
 	var i int
 	for _, m := range m.ms {
 		n := m.Size()
-		sub := runes.Head(s[i:], n)
+		sub := runesHead(s[i:], n)
 		if !m.Match(sub) {
 			return false
 		}
@@ -781,7 +778,7 @@ func (m SingleMatcher) Match(v string) bool {
 	if len(v) > w {
 		return false
 	}
-	return runes.IndexRune(m.sep, r) == -1
+	return runesIndexRune(m.sep, r) == -1
 }
 
 func (SingleMatcher) Len() int {
@@ -794,7 +791,7 @@ func (SingleMatcher) Size() int {
 
 func (m SingleMatcher) Index(v string) (int, []int) {
 	for i, r := range v {
-		if runes.IndexRune(m.sep, r) == -1 {
+		if runesIndexRune(m.sep, r) == -1 {
 			return i, segmentsByRuneLength[utf8.RuneLen(r)]
 		}
 	}
@@ -824,7 +821,7 @@ func (m SuffixAnyMatcher) Index(v string) (int, []int) {
 	if idx == -1 {
 		return -1, nil
 	}
-	i := runes.LastIndexAnyRune(v[:idx], m.sep) + 1
+	i := runesLastIndexAnyRune(v[:idx], m.sep) + 1
 	return i, []int{idx + len(m.s) - i}
 }
 
@@ -836,7 +833,7 @@ func (m SuffixAnyMatcher) Match(v string) bool {
 	if !strings.HasSuffix(v, m.s) {
 		return false
 	}
-	return runes.IndexAnyRune(v[:len(v)-len(m.s)], m.sep) == -1
+	return runesIndexAnyRune(v[:len(v)-len(m.s)], m.sep) == -1
 }
 
 // String satisfies the [fmt.Stringer] interface.
@@ -1009,22 +1006,22 @@ func (m TreeMatcher) Content(f func(Matcher)) {
 }
 
 func (m TreeMatcher) Match(s string) (ok bool) {
-	if debug.Enabled {
-		done := debug.Matching("tree", s)
+	if debugEnabled {
+		done := debugMatching("tree", s)
 		defer func() { done(ok) }()
 	}
 	n := len(s)
 	offset, limit := m.offsetLimit(s)
 	for len(s)-offset-limit >= m.vrunes {
-		if debug.Enabled {
-			debug.Logf(
+		if debugEnabled {
+			debugLogf(
 				"value %s indexing: %q (offset=%d; limit=%d)",
 				m.value, s[offset:n-limit], offset, limit,
 			)
 		}
 		index, segments := m.value.Index(s[offset : n-limit])
-		if debug.Enabled {
-			debug.Logf(
+		if debugEnabled {
+			debugLogf(
 				"value %s index: %d; %v",
 				m.value, index, segments,
 			)
@@ -1033,21 +1030,21 @@ func (m TreeMatcher) Match(s string) (ok bool) {
 			releaseSegments(segments)
 			return false
 		}
-		if debug.Enabled {
-			debug.Logf("matching left: %q", s[:offset+index])
+		if debugEnabled {
+			debugLogf("matching left: %q", s[:offset+index])
 		}
 		left := m.left.Match(s[:offset+index])
-		if debug.Enabled {
-			debug.Logf("matching left: -> %t", left)
+		if debugEnabled {
+			debugLogf("matching left: -> %t", left)
 		}
 		if left {
 			for _, seg := range segments {
-				if debug.Enabled {
-					debug.Logf("matching right: %q", s[offset+index+seg:])
+				if debugEnabled {
+					debugLogf("matching right: %q", s[offset+index+seg:])
 				}
 				right := m.right.Match(s[offset+index+seg:])
-				if debug.Enabled {
-					debug.Logf("matching right: -> %t", right)
+				if debugEnabled {
+					debugLogf("matching right: -> %t", right)
 				}
 				if right {
 					releaseSegments(segments)
@@ -1073,10 +1070,10 @@ func (m TreeMatcher) offsetLimit(s string) (offset, limit int) {
 		return 0, 0
 	}
 	if n := m.lrunes; n > 0 {
-		offset = len(runes.Head(s, n))
+		offset = len(runesHead(s, n))
 	}
 	if n := m.rrunes; n > 0 {
-		limit = len(runes.Tail(s, n))
+		limit = len(runesTail(s, n))
 	}
 	return
 }

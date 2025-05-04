@@ -4,8 +4,6 @@ import (
 	"reflect"
 	"strconv"
 	"testing"
-
-	"github.com/kenshaw/glob/match"
 )
 
 func TestNode(t *testing.T) {
@@ -13,14 +11,14 @@ func TestNode(t *testing.T) {
 	for i, test := range []struct {
 		tree *Node
 		sep  []rune
-		exp  match.Matcher
+		exp  Matcher
 	}{
 		{
 			// #0
 			tree: New(Pattern, nil,
 				New(Text, TextData{"abc"}),
 			),
-			exp: match.NewText("abc"),
+			exp: NewText("abc"),
 		},
 		{
 			// #1
@@ -28,21 +26,21 @@ func TestNode(t *testing.T) {
 				New(Any, nil),
 			),
 			sep: sep,
-			exp: match.NewAny(sep),
+			exp: NewAny(sep),
 		},
 		{
 			// #2
 			tree: New(Pattern, nil,
 				New(Any, nil),
 			),
-			exp: match.NewSuper(),
+			exp: NewSuper(),
 		},
 		{
 			// #3
 			tree: New(Pattern, nil,
 				New(Super, nil),
 			),
-			exp: match.NewSuper(),
+			exp: NewSuper(),
 		},
 		{
 			// #4
@@ -50,7 +48,7 @@ func TestNode(t *testing.T) {
 				New(Single, nil),
 			),
 			sep: sep,
-			exp: match.NewSingle(sep),
+			exp: NewSingle(sep),
 		},
 		{
 			// #5
@@ -61,7 +59,7 @@ func TestNode(t *testing.T) {
 					Not: true,
 				}),
 			),
-			exp: match.NewRange('a', 'z', true),
+			exp: NewRange('a', 'z', true),
 		},
 		{
 			// #6
@@ -71,7 +69,7 @@ func TestNode(t *testing.T) {
 					Not:   true,
 				}),
 			),
-			exp: match.NewList([]rune{'a', 'b', 'c'}, true),
+			exp: NewList([]rune{'a', 'b', 'c'}, true),
 		},
 		{
 			// #7
@@ -82,9 +80,9 @@ func TestNode(t *testing.T) {
 				New(Single, nil),
 			),
 			sep: sep,
-			exp: match.NewEveryOf([]match.Matcher{
-				match.NewMin(3),
-				match.NewAny(sep),
+			exp: NewEveryOf([]Matcher{
+				NewMin(3),
+				NewAny(sep),
 			}),
 		},
 		{
@@ -95,7 +93,7 @@ func TestNode(t *testing.T) {
 				New(Single, nil),
 				New(Single, nil),
 			),
-			exp: match.NewMin(3),
+			exp: NewMin(3),
 		},
 		{
 			// #9
@@ -105,13 +103,13 @@ func TestNode(t *testing.T) {
 				New(Single, nil),
 			),
 			sep: sep,
-			exp: match.NewTree(
-				match.NewRow([]match.MatchIndexSizer{
-					match.NewText("abc"),
-					match.NewSingle(sep),
+			exp: NewTree(
+				NewRow([]MatchIndexSizer{
+					NewText("abc"),
+					NewSingle(sep),
 				}),
-				match.NewAny(sep),
-				match.NothingMatcher{},
+				NewAny(sep),
+				NothingMatcher{},
 			),
 		},
 		{
@@ -125,16 +123,16 @@ func TestNode(t *testing.T) {
 				New(Super, nil),
 			),
 			sep: sep,
-			exp: match.NewTree(
-				match.NewText("/"),
-				match.NothingMatcher{},
-				match.NewTree(
-					match.MustIndexedAnyOf(
-						match.NewText("z"),
-						match.NewText("ab"),
+			exp: NewTree(
+				NewText("/"),
+				NothingMatcher{},
+				NewTree(
+					MustIndexedAnyOf(
+						NewText("z"),
+						NewText("ab"),
 					),
-					match.NothingMatcher{},
-					match.NewSuper(),
+					NothingMatcher{},
+					NewSuper(),
 				),
 			),
 		},
@@ -147,14 +145,14 @@ func TestNode(t *testing.T) {
 				New(Single, nil),
 			),
 			sep: sep,
-			exp: match.NewTree(
-				match.NewRow([]match.MatchIndexSizer{
-					match.NewSingle(sep),
-					match.NewText("abc"),
-					match.NewSingle(sep),
+			exp: NewTree(
+				NewRow([]MatchIndexSizer{
+					NewSingle(sep),
+					NewText("abc"),
+					NewSingle(sep),
 				}),
-				match.NewSuper(),
-				match.NothingMatcher{},
+				NewSuper(),
+				NothingMatcher{},
 			),
 		},
 		{
@@ -163,7 +161,7 @@ func TestNode(t *testing.T) {
 				New(Any, nil),
 				New(Text, TextData{"abc"}),
 			),
-			exp: match.NewSuffix("abc"),
+			exp: NewSuffix("abc"),
 		},
 		{
 			// #13
@@ -171,7 +169,7 @@ func TestNode(t *testing.T) {
 				New(Text, TextData{"abc"}),
 				New(Any, nil),
 			),
-			exp: match.NewPrefix("abc"),
+			exp: NewPrefix("abc"),
 		},
 		{
 			// #14
@@ -180,7 +178,7 @@ func TestNode(t *testing.T) {
 				New(Any, nil),
 				New(Text, TextData{"def"}),
 			),
-			exp: match.NewPrefixSuffix("abc", "def"),
+			exp: NewPrefixSuffix("abc", "def"),
 		},
 		{
 			// #15
@@ -192,7 +190,7 @@ func TestNode(t *testing.T) {
 				New(Any, nil),
 				New(Any, nil),
 			),
-			exp: match.NewContains("abc"),
+			exp: NewContains("abc"),
 		},
 		{
 			// #16
@@ -205,10 +203,10 @@ func TestNode(t *testing.T) {
 				New(Any, nil),
 			),
 			sep: sep,
-			exp: match.NewTree(
-				match.NewText("abc"),
-				match.NewAny(sep),
-				match.NewAny(sep),
+			exp: NewTree(
+				NewText("abc"),
+				NewAny(sep),
+				NewAny(sep),
 			),
 		},
 		{
@@ -221,10 +219,10 @@ func TestNode(t *testing.T) {
 				New(Super, nil),
 				New(Single, nil),
 			),
-			exp: match.NewTree(
-				match.NewText("abc"),
-				match.NewMin(1),
-				match.NewMin(1),
+			exp: NewTree(
+				NewText("abc"),
+				NewMin(1),
+				NewMin(1),
 			),
 		},
 		{
@@ -232,7 +230,7 @@ func TestNode(t *testing.T) {
 			tree: New(Pattern, nil,
 				New(Text, TextData{"abc"}),
 			),
-			exp: match.NewText("abc"),
+			exp: NewText("abc"),
 		},
 		{
 			// #19
@@ -247,7 +245,7 @@ func TestNode(t *testing.T) {
 					),
 				),
 			),
-			exp: match.NewText("abc"),
+			exp: NewText("abc"),
 		},
 		{
 			// #20
@@ -269,13 +267,13 @@ func TestNode(t *testing.T) {
 					),
 				),
 			),
-			exp: match.NewTree(
-				match.NewText("abc"),
-				match.NothingMatcher{},
-				match.NewAnyOf(
-					match.NewSingle(nil),
-					match.NewList([]rune{'d', 'e', 'f'}, false),
-					match.NewNothing(),
+			exp: NewTree(
+				NewText("abc"),
+				NothingMatcher{},
+				NewAnyOf(
+					NewSingle(nil),
+					NewList([]rune{'d', 'e', 'f'}, false),
+					NewNothing(),
 				),
 			),
 		},
@@ -286,13 +284,13 @@ func TestNode(t *testing.T) {
 				New(Range, RangeData{Lo: 'a', Hi: 'x', Not: true}),
 				New(Any, nil),
 			),
-			exp: match.NewTree(
-				match.NewRow([]match.MatchIndexSizer{
-					match.NewRange('a', 'z', false),
-					match.NewRange('a', 'x', true),
+			exp: NewTree(
+				NewRow([]MatchIndexSizer{
+					NewRange('a', 'z', false),
+					NewRange('a', 'x', true),
 				}),
-				match.NothingMatcher{},
-				match.NewSuper(),
+				NothingMatcher{},
+				NewSuper(),
 			),
 		},
 		{
@@ -311,13 +309,13 @@ func TestNode(t *testing.T) {
 					),
 				),
 			),
-			exp: match.NewRow([]match.MatchIndexSizer{
-				match.NewText("abc"),
-				match.MustIndexedSizedAnyOf(
-					match.NewList([]rune{'a', 'b', 'c'}, false),
-					match.NewList([]rune{'d', 'e', 'f'}, false),
+			exp: NewRow([]MatchIndexSizer{
+				NewText("abc"),
+				MustIndexedSizedAnyOf(
+					NewList([]rune{'a', 'b', 'c'}, false),
+					NewList([]rune{'d', 'e', 'f'}, false),
 				),
-				match.NewText("ghi"),
+				NewText("ghi"),
 			}),
 		},
 	} {
@@ -330,8 +328,8 @@ func TestNode(t *testing.T) {
 				t.Errorf(
 					"Compile():\nact: %#v\nexp: %#v\n\ngraphviz:\n%s\n%s\n",
 					m, test.exp,
-					match.Graphviz("act", m.(match.Matcher)),
-					match.Graphviz("exp", test.exp.(match.Matcher)),
+					Graphviz("act", m.(Matcher)),
+					Graphviz("exp", test.exp.(Matcher)),
 				)
 			}
 		})

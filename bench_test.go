@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/kenshaw/glob/match"
+	"github.com/kenshaw/glob/syntax"
 )
 
 func BenchmarkParseGlob(b *testing.B) {
@@ -37,7 +37,7 @@ func BenchmarkAllRegexpMatch(b *testing.B) {
 
 func BenchmarkAllGlobMismatch(b *testing.B) {
 	g := MustCompile(pattern_all)
-	fmt.Println(match.Graphviz(pattern_all, g))
+	fmt.Println(syntax.Graphviz(pattern_all, g))
 	for b.Loop() {
 		_ = g.Match(fixture_all_mismatch)
 	}

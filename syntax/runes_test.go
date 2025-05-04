@@ -1,4 +1,4 @@
-package runes
+package syntax
 
 import (
 	"strings"
@@ -89,9 +89,18 @@ func runIndexTests(t *testing.T, f func(s, sep []rune) int, funcName string, tes
 		}
 	}
 }
-func TestIndex(t *testing.T)     { runIndexTests(t, Index, "Index", indexTests) }
-func TestLastIndex(t *testing.T) { runIndexTests(t, LastIndex, "LastIndex", lastIndexTests) }
-func TestIndexAny(t *testing.T)  { runIndexTests(t, IndexAny, "IndexAny", indexAnyTests) }
+
+func TestIndex(t *testing.T) {
+	runIndexTests(t, runesIndex, "Index", indexTests)
+}
+
+func TestLastIndex(t *testing.T) {
+	runIndexTests(t, runesLastIndex, "LastIndex", lastIndexTests)
+}
+
+func TestIndexAny(t *testing.T) {
+	runIndexTests(t, runesIndexAny, "IndexAny", indexAnyTests)
+}
 
 var equalTests = []equalTest{
 	newEqualTest("a", "a", true),
@@ -102,7 +111,7 @@ var equalTests = []equalTest{
 
 func TestEqual(t *testing.T) {
 	for _, test := range equalTests {
-		actual := Equal(test.a, test.b)
+		actual := runesEqual(test.a, test.b)
 		if actual != test.out {
 			t.Errorf("Equal(%q,%q) = %v; want %v", test.a, test.b, actual, test.out)
 		}
@@ -113,7 +122,7 @@ func BenchmarkLastIndexRunes(b *testing.B) {
 	r := []rune("abcdef")
 	n := []rune("cd")
 	for b.Loop() {
-		LastIndex(r, n)
+		runesLastIndex(r, n)
 	}
 }
 
@@ -129,7 +138,7 @@ func BenchmarkIndexAnyRunes(b *testing.B) {
 	s := []rune("...b...")
 	c := []rune("abc")
 	for b.Loop() {
-		IndexAny(s, c)
+		runesIndexAny(s, c)
 	}
 }
 
@@ -145,7 +154,7 @@ func BenchmarkIndexRuneRunes(b *testing.B) {
 	s := []rune("...b...")
 	r := 'b'
 	for b.Loop() {
-		IndexRune(s, r)
+		runesIndexRune(s, r)
 	}
 }
 
@@ -161,7 +170,7 @@ func BenchmarkIndexRunes(b *testing.B) {
 	r := []rune("abcdef")
 	n := []rune("cd")
 	for b.Loop() {
-		Index(r, n)
+		runesIndex(r, n)
 	}
 }
 
@@ -177,7 +186,7 @@ func BenchmarkEqualRunes(b *testing.B) {
 	x := []rune("abc")
 	y := []rune("abc")
 	for b.Loop() {
-		if Equal(x, y) {
+		if runesEqual(x, y) {
 			continue
 		}
 	}
@@ -197,7 +206,7 @@ func BenchmarkNotEqualRunes(b *testing.B) {
 	x := []rune("abc")
 	y := []rune("abcd")
 	for b.Loop() {
-		if Equal(x, y) {
+		if runesEqual(x, y) {
 			continue
 		}
 	}

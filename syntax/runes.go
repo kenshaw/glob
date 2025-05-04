@@ -1,4 +1,4 @@
-package runes
+package syntax
 
 import (
 	"slices"
@@ -6,7 +6,7 @@ import (
 	"unicode/utf8"
 )
 
-func Head(s string, r int) string {
+func runesHead(s string, r int) string {
 	var i, m int
 	for i < len(s) {
 		_, n := utf8.DecodeRuneInString(s[i:])
@@ -19,7 +19,7 @@ func Head(s string, r int) string {
 	return s[:i]
 }
 
-func Tail(s string, r int) string {
+func runesTail(s string, r int) string {
 	var i, n int
 	for i = len(s); i >= 0; {
 		var ok bool
@@ -39,7 +39,7 @@ func Tail(s string, r int) string {
 	return s[i:]
 }
 
-func ExactlyRunesCount(s string, n int) bool {
+func runesExactlyRunesCount(s string, n int) bool {
 	var m int
 	for range s {
 		m++
@@ -50,7 +50,7 @@ func ExactlyRunesCount(s string, n int) bool {
 	return m == n
 }
 
-func AtLeastRunesCount(s string, n int) bool {
+func runesAtLeastRunesCount(s string, n int) bool {
 	var m int
 	for range s {
 		m++
@@ -61,7 +61,7 @@ func AtLeastRunesCount(s string, n int) bool {
 	return false
 }
 
-func IndexAnyRune(s string, rs []rune) int {
+func runesIndexAnyRune(s string, rs []rune) int {
 	for _, r := range rs {
 		if i := strings.IndexRune(s, r); i != -1 {
 			return i
@@ -70,7 +70,7 @@ func IndexAnyRune(s string, rs []rune) int {
 	return -1
 }
 
-func LastIndexAnyRune(s string, rs []rune) int {
+func runesLastIndexAnyRune(s string, rs []rune) int {
 	for _, r := range rs {
 		i := -1
 		if 0 <= r && r < utf8.RuneSelf {
@@ -93,15 +93,15 @@ func LastIndexAnyRune(s string, rs []rune) int {
 	return -1
 }
 
-func Index(s, needle []rune) int {
+func runesIndex(s, needle []rune) int {
 	ls, ln := len(s), len(needle)
 	switch {
 	case ln == 0:
 		return 0
 	case ln == 1:
-		return IndexRune(s, needle[0])
+		return runesIndexRune(s, needle[0])
 	case ln == ls:
-		if Equal(s, needle) {
+		if runesEqual(s, needle) {
 			return 0
 		}
 		return -1
@@ -120,7 +120,7 @@ head:
 	return -1
 }
 
-func LastIndex(s, needle []rune) int {
+func runesLastIndex(s, needle []rune) int {
 	ls, ln := len(s), len(needle)
 	switch {
 	case ln == 0:
@@ -129,9 +129,9 @@ func LastIndex(s, needle []rune) int {
 		}
 		return ls
 	case ln == 1:
-		return IndexLastRune(s, needle[0])
+		return runesIndexLastRune(s, needle[0])
 	case ln == ls:
-		if Equal(s, needle) {
+		if runesEqual(s, needle) {
 			return 0
 		}
 		return -1
@@ -152,7 +152,7 @@ head:
 
 // IndexAny returns the index of the first instance of any Unicode code point
 // from chars in s, or -1 if no Unicode code point from chars is present in s.
-func IndexAny(s, chars []rune) int {
+func runesIndexAny(s, chars []rune) int {
 	if len(chars) > 0 {
 		for i, c := range s {
 			if slices.Contains(chars, c) {
@@ -163,11 +163,11 @@ func IndexAny(s, chars []rune) int {
 	return -1
 }
 
-func Contains(s, needle []rune) bool {
-	return Index(s, needle) >= 0
+func runesContains(s, needle []rune) bool {
+	return runesIndex(s, needle) >= 0
 }
 
-func Max(s []rune) (max rune) {
+func runesMax(s []rune) (max rune) {
 	for _, r := range s {
 		if r > max {
 			max = r
@@ -176,7 +176,7 @@ func Max(s []rune) (max rune) {
 	return
 }
 
-func Min(s []rune) rune {
+func runesMin(s []rune) rune {
 	min := rune(-1)
 	for _, r := range s {
 		if min == -1 {
@@ -190,7 +190,7 @@ func Min(s []rune) rune {
 	return min
 }
 
-func IndexRune(s []rune, r rune) int {
+func runesIndexRune(s []rune, r rune) int {
 	for i, c := range s {
 		if c == r {
 			return i
@@ -199,7 +199,7 @@ func IndexRune(s []rune, r rune) int {
 	return -1
 }
 
-func IndexLastRune(s []rune, r rune) int {
+func runesIndexLastRune(s []rune, r rune) int {
 	for i := len(s) - 1; i >= 0; i-- {
 		if s[i] == r {
 			return i
@@ -208,7 +208,7 @@ func IndexLastRune(s []rune, r rune) int {
 	return -1
 }
 
-func Equal(a, b []rune) bool {
+func runesEqual(a, b []rune) bool {
 	// TODO use bytes.Equal with unsafe.
 	if len(a) == len(b) {
 		for i := range a {
@@ -222,11 +222,11 @@ func Equal(a, b []rune) bool {
 }
 
 // HasPrefix tests whether the string s begins with prefix.
-func HasPrefix(s, prefix []rune) bool {
-	return len(s) >= len(prefix) && Equal(s[0:len(prefix)], prefix)
+func runesHasPrefix(s, prefix []rune) bool {
+	return len(s) >= len(prefix) && runesEqual(s[0:len(prefix)], prefix)
 }
 
 // HasSuffix tests whether the string s ends with suffix.
-func HasSuffix(s, suffix []rune) bool {
-	return len(s) >= len(suffix) && Equal(s[len(s)-len(suffix):], suffix)
+func runesHasSuffix(s, suffix []rune) bool {
+	return len(s) >= len(suffix) && runesEqual(s[len(s)-len(suffix):], suffix)
 }
