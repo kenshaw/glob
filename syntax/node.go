@@ -3,6 +3,8 @@ package syntax
 import (
 	"bytes"
 	"fmt"
+
+	"github.com/kenshaw/glob/match"
 )
 
 type Node struct {
@@ -59,6 +61,10 @@ func (a *Node) String() string {
 		buf.WriteString("]")
 	}
 	return buf.String()
+}
+
+func (node *Node) Compile(sep []rune) (match.Matcher, error) {
+	return compileNode(node, sep)
 }
 
 func Insert(parent *Node, children ...*Node) {
