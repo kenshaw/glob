@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"unicode/utf8"
 
-	"github.com/kenshaw/glob/internal/debug"
+	"github.com/kenshaw/glob/debug"
 	"github.com/kenshaw/glob/runes"
 )
 

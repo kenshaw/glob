@@ -1,14 +1,15 @@
 package compiler
 
-// TODO use constructor with all matchers, and to their structs private
-// TODO glue multiple Text nodes (like after QuoteMeta)
 import (
 	"fmt"
 
-	"github.com/kenshaw/glob/internal/debug"
+	"github.com/kenshaw/glob/debug"
 	"github.com/kenshaw/glob/match"
 	"github.com/kenshaw/glob/syntax/ast"
 )
+
+// TODO use constructor with all matchers, and to their structs private
+// TODO glue multiple Text nodes (like after QuoteMeta)
 
 func Compile(tree *ast.Node, sep []rune) (match.Matcher, error) {
 	m, err := compile(tree, sep)
@@ -16,18 +17,6 @@ func Compile(tree *ast.Node, sep []rune) (match.Matcher, error) {
 		return nil, err
 	}
 	return m, nil
-}
-
-func compileNodes(ns []*ast.Node, sep []rune) ([]match.Matcher, error) {
-	var matchers []match.Matcher
-	for _, n := range ns {
-		m, err := compile(n, sep)
-		if err != nil {
-			return nil, err
-		}
-		matchers = append(matchers, m)
-	}
-	return matchers, nil
 }
 
 func compile(node *ast.Node, sep []rune) (m match.Matcher, err error) {
@@ -96,7 +85,19 @@ func compile(node *ast.Node, sep []rune) (m match.Matcher, err error) {
 		t := node.Value.(ast.Text)
 		m = match.NewText(t.Text)
 	default:
-		return nil, fmt.Errorf("could not compile tree: unknown node type")
+		return nil, fmt.Errorf("could not compile tree: unknown node type %s (%d)", node.Kind, int(node.Kind))
 	}
 	return match.Optimize(m), nil
+}
+
+func compileNodes(ns []*ast.Node, sep []rune) ([]match.Matcher, error) {
+	var matchers []match.Matcher
+	for _, n := range ns {
+		m, err := compile(n, sep)
+		if err != nil {
+			return nil, err
+		}
+		matchers = append(matchers, m)
+	}
+	return matchers, nil
 }

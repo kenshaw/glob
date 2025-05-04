@@ -19,3 +19,7 @@ linters:
     - varnamelen
     - wrapcheck
     - wsl
+    - gocognit
+    - gosec
+    - lll
+    - maintidx

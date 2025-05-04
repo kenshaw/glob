@@ -72,7 +72,7 @@ func (f *fakeMatcher) Match(string) bool {
 
 func (f *fakeMatcher) Index(s string) (int, []int) {
 	seg := make([]int, 0, f.segn)
-	for x := 0; x < f.segn; x++ {
+	for range f.segn {
 		seg = append(seg, f.segn)
 	}
 	return 0, seg

@@ -56,12 +56,6 @@ func BenchmarkAppendMergeParallel(b *testing.B) {
 	})
 }
 
-func BenchmarkReverse(b *testing.B) {
-	for b.Loop() {
-		reverseSegments([]int{1, 2, 3, 4})
-	}
-}
-
 func getTable() []int {
 	table := make([]int, utf8.MaxRune+1)
 	for i := 0; i <= utf8.MaxRune; i++ {

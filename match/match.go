@@ -1,34 +1,41 @@
 package match
 
-// todo common table of rune's length
 import (
 	"fmt"
 	"strings"
 )
 
+// todo common table of rune's length
+
 type Matcher interface {
 	Match(string) bool
 	MinLen() int
 }
+
 type Indexer interface {
 	Index(string) (int, []int)
 }
+
 type Sizer interface {
 	RunesCount() int
 }
+
 type MatchIndexer interface {
 	Matcher
 	Indexer
 }
+
 type MatchSizer interface {
 	Matcher
 	Sizer
 }
+
 type MatchIndexSizer interface {
 	Matcher
 	Indexer
 	Sizer
 }
+
 type Container interface {
 	Content(func(Matcher))
 }
@@ -99,12 +106,4 @@ func appendMerge(target, sub []int) []int {
 	}
 	target = append(target[:0], out...)
 	return target
-}
-
-func reverseSegments(input []int) {
-	l := len(input)
-	m := l / 2
-	for i := range m {
-		input[i], input[l-i-1] = input[l-i-1], input[i]
-	}
 }

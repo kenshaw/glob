@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"unicode/utf8"
 
-	"github.com/kenshaw/glob/internal/debug"
+	"github.com/kenshaw/glob/debug"
 	"github.com/kenshaw/glob/runes"
 )
 
@@ -139,7 +139,7 @@ func (t Tree) Match(s string) (ok bool) {
 	return false
 }
 
-// Retuns substring and offset/limit pair in bytes.
+// Returns substring and offset/limit pair in bytes.
 func (t Tree) offsetLimit(s string) (offset, limit int) {
 	n := utf8.RuneCountInString(s)
 	if t.runes > n {

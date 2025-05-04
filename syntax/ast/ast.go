@@ -72,13 +72,16 @@ type List struct {
 	Not   bool
 	Chars string
 }
+
 type Range struct {
 	Not    bool
 	Lo, Hi rune
 }
+
 type Text struct {
 	Text string
 }
+
 type Kind int
 
 const (
