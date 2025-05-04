@@ -13,9 +13,9 @@ type Type int
 const (
 	Nothing Type = iota
 	Pattern
-	KindList
-	KindRange
-	KindText
+	List
+	Range
+	Text
 	Any
 	Super
 	Single
@@ -28,11 +28,11 @@ func (typ Type) String() string {
 		return "Nothing"
 	case Pattern:
 		return "Pattern"
-	case KindList:
+	case List:
 		return "List"
-	case KindRange:
+	case Range:
 		return "Range"
-	case KindText:
+	case Text:
 		return "Text"
 	case Any:
 		return "Any"
@@ -113,17 +113,17 @@ func (node *Node) String() string {
 	return buf.String()
 }
 
-type List struct {
+type ListData struct {
 	Not   bool
 	Chars string
 }
 
-type Range struct {
+type RangeData struct {
 	Not    bool
 	Lo, Hi rune
 }
 
-type Text struct {
+type TextData struct {
 	Text string
 }
 
@@ -186,14 +186,14 @@ func buildMatch(node *Node, sep []rune) (m match.Matcher, err error) {
 		m = match.NewSingle(sep)
 	case Nothing:
 		m = match.NewNothing()
-	case KindList:
-		l := node.Value.(List)
+	case List:
+		l := node.Value.(ListData)
 		m = match.NewList([]rune(l.Chars), l.Not)
-	case KindRange:
-		r := node.Value.(Range)
+	case Range:
+		r := node.Value.(RangeData)
 		m = match.NewRange(r.Lo, r.Hi, r.Not)
-	case KindText:
-		t := node.Value.(Text)
+	case Text:
+		t := node.Value.(TextData)
 		m = match.NewText(t.Text)
 	default:
 		return nil, fmt.Errorf("could not compile tree: unknown node type %s (%d)", node.Type, int(node.Type))

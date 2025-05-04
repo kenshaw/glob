@@ -8,11 +8,12 @@ import (
 	"github.com/kenshaw/glob/syntax"
 )
 
-// Glob wraps a glob pattern.
+// Glob matches glob patterns.
 type Glob struct {
 	match.Matcher
 }
 
+// String satisfies the [fmt.Stringer] interface.
 func (g *Glob) String() string {
 	return fmt.Sprintf("%v", g.Matcher)
 }

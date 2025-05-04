@@ -18,7 +18,7 @@ func TestNode(t *testing.T) {
 		{
 			// #0
 			tree: New(Pattern, nil,
-				New(KindText, Text{"abc"}),
+				New(Text, TextData{"abc"}),
 			),
 			exp: match.NewText("abc"),
 		},
@@ -55,7 +55,7 @@ func TestNode(t *testing.T) {
 		{
 			// #5
 			tree: New(Pattern, nil,
-				New(KindRange, Range{
+				New(Range, RangeData{
 					Lo:  'a',
 					Hi:  'z',
 					Not: true,
@@ -66,7 +66,7 @@ func TestNode(t *testing.T) {
 		{
 			// #6
 			tree: New(Pattern, nil,
-				New(KindList, List{
+				New(List, ListData{
 					Chars: "abc",
 					Not:   true,
 				}),
@@ -101,7 +101,7 @@ func TestNode(t *testing.T) {
 			// #9
 			tree: New(Pattern, nil,
 				New(Any, nil),
-				New(KindText, Text{"abc"}),
+				New(Text, TextData{"abc"}),
 				New(Single, nil),
 			),
 			sep: sep,
@@ -117,10 +117,10 @@ func TestNode(t *testing.T) {
 		{
 			// #10
 			tree: New(Pattern, nil,
-				New(KindText, Text{"/"}),
+				New(Text, TextData{"/"}),
 				New(AnyOf, nil,
-					New(KindText, Text{"z"}),
-					New(KindText, Text{"ab"}),
+					New(Text, TextData{"z"}),
+					New(Text, TextData{"ab"}),
 				),
 				New(Super, nil),
 			),
@@ -143,7 +143,7 @@ func TestNode(t *testing.T) {
 			tree: New(Pattern, nil,
 				New(Super, nil),
 				New(Single, nil),
-				New(KindText, Text{"abc"}),
+				New(Text, TextData{"abc"}),
 				New(Single, nil),
 			),
 			sep: sep,
@@ -161,14 +161,14 @@ func TestNode(t *testing.T) {
 			// #12
 			tree: New(Pattern, nil,
 				New(Any, nil),
-				New(KindText, Text{"abc"}),
+				New(Text, TextData{"abc"}),
 			),
 			exp: match.NewSuffix("abc"),
 		},
 		{
 			// #13
 			tree: New(Pattern, nil,
-				New(KindText, Text{"abc"}),
+				New(Text, TextData{"abc"}),
 				New(Any, nil),
 			),
 			exp: match.NewPrefix("abc"),
@@ -176,9 +176,9 @@ func TestNode(t *testing.T) {
 		{
 			// #14
 			tree: New(Pattern, nil,
-				New(KindText, Text{"abc"}),
+				New(Text, TextData{"abc"}),
 				New(Any, nil),
-				New(KindText, Text{"def"}),
+				New(Text, TextData{"def"}),
 			),
 			exp: match.NewPrefixSuffix("abc", "def"),
 		},
@@ -188,7 +188,7 @@ func TestNode(t *testing.T) {
 				New(Any, nil),
 				New(Any, nil),
 				New(Any, nil),
-				New(KindText, Text{"abc"}),
+				New(Text, TextData{"abc"}),
 				New(Any, nil),
 				New(Any, nil),
 			),
@@ -200,7 +200,7 @@ func TestNode(t *testing.T) {
 				New(Any, nil),
 				New(Any, nil),
 				New(Any, nil),
-				New(KindText, Text{"abc"}),
+				New(Text, TextData{"abc"}),
 				New(Any, nil),
 				New(Any, nil),
 			),
@@ -217,7 +217,7 @@ func TestNode(t *testing.T) {
 			tree: New(Pattern, nil,
 				New(Super, nil),
 				New(Single, nil),
-				New(KindText, Text{"abc"}),
+				New(Text, TextData{"abc"}),
 				New(Super, nil),
 				New(Single, nil),
 			),
@@ -230,7 +230,7 @@ func TestNode(t *testing.T) {
 		{
 			// #18
 			tree: New(Pattern, nil,
-				New(KindText, Text{"abc"}),
+				New(Text, TextData{"abc"}),
 			),
 			exp: match.NewText("abc"),
 		},
@@ -241,7 +241,7 @@ func TestNode(t *testing.T) {
 					New(Pattern, nil,
 						New(AnyOf, nil,
 							New(Pattern, nil,
-								New(KindText, Text{"abc"}),
+								New(Text, TextData{"abc"}),
 							),
 						),
 					),
@@ -254,18 +254,18 @@ func TestNode(t *testing.T) {
 			tree: New(Pattern, nil,
 				New(AnyOf, nil,
 					New(Pattern, nil,
-						New(KindText, Text{"abc"}),
+						New(Text, TextData{"abc"}),
 						New(Single, nil),
 					),
 					New(Pattern, nil,
-						New(KindText, Text{"abc"}),
-						New(KindList, List{Chars: "def"}),
+						New(Text, TextData{"abc"}),
+						New(List, ListData{Chars: "def"}),
 					),
 					New(Pattern, nil,
-						New(KindText, Text{"abc"}),
+						New(Text, TextData{"abc"}),
 					),
 					New(Pattern, nil,
-						New(KindText, Text{"abc"}),
+						New(Text, TextData{"abc"}),
 					),
 				),
 			),
@@ -282,8 +282,8 @@ func TestNode(t *testing.T) {
 		{
 			// #21
 			tree: New(Pattern, nil,
-				New(KindRange, Range{Lo: 'a', Hi: 'z'}),
-				New(KindRange, Range{Lo: 'a', Hi: 'x', Not: true}),
+				New(Range, RangeData{Lo: 'a', Hi: 'z'}),
+				New(Range, RangeData{Lo: 'a', Hi: 'x', Not: true}),
 				New(Any, nil),
 			),
 			exp: match.NewTree(
@@ -300,14 +300,14 @@ func TestNode(t *testing.T) {
 			tree: New(Pattern, nil,
 				New(AnyOf, nil,
 					New(Pattern, nil,
-						New(KindText, Text{"abc"}),
-						New(KindList, List{Chars: "abc"}),
-						New(KindText, Text{"ghi"}),
+						New(Text, TextData{"abc"}),
+						New(List, ListData{Chars: "abc"}),
+						New(Text, TextData{"ghi"}),
 					),
 					New(Pattern, nil,
-						New(KindText, Text{"abc"}),
-						New(KindList, List{Chars: "def"}),
-						New(KindText, Text{"ghi"}),
+						New(Text, TextData{"abc"}),
+						New(List, ListData{Chars: "def"}),
+						New(Text, TextData{"ghi"}),
 					),
 				),
 			),

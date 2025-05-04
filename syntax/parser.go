@@ -37,7 +37,7 @@ func parseNode(node *Node, l lexer) (parseFunc, *Node, error) {
 		case TokenError:
 			return nil, node, errors.New(token.Raw)
 		case TokenText:
-			node.Insert(New(KindText, Text{token.Raw}))
+			node.Insert(New(Text, TextData{token.Raw}))
 			return parseNode, node, nil
 		case TokenAny:
 			node.Insert(New(Any, nil))
@@ -110,13 +110,13 @@ func parseRange(node *Node, l lexer) (parseFunc, *Node, error) {
 				return nil, node, fmt.Errorf("could not parse range")
 			}
 			if isRange {
-				node.Insert(New(KindRange, Range{
+				node.Insert(New(Range, RangeData{
 					Lo:  lo,
 					Hi:  hi,
 					Not: not,
 				}))
 			} else {
-				node.Insert(New(KindList, List{
+				node.Insert(New(List, ListData{
 					Chars: chars,
 					Not:   not,
 				}))
