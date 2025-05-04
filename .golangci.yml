@@ -6,10 +6,7 @@ linters:
     - depguard
     - err113
     - errcheck
-    - paralleltest
-    - varnamelen
-    - wrapcheck
-    - wsl
+    - exhaustive
     - exhaustruct
     - forcetypeassert
     - funlen
@@ -17,4 +14,8 @@ linters:
     - ireturn
     - mnd
     - nlreturn
+    - paralleltest
     - testpackage
+    - varnamelen
+    - wrapcheck
+    - wsl

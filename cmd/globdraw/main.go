@@ -34,7 +34,7 @@ func run(pattern, sep, filepath string, auto bool, offset int) error {
 	if filepath != "" {
 		file, err := os.Open(filepath)
 		if err != nil {
-			return fmt.Errorf("could not open %s: %v", filepath, err)
+			return fmt.Errorf("could not open %s: %w", filepath, err)
 		}
 		s := bufio.NewScanner(file)
 		for s.Scan() {
@@ -65,7 +65,7 @@ func run(pattern, sep, filepath string, auto bool, offset int) error {
 	for _, p := range patterns {
 		g, err := glob.Compile(p, separators...)
 		if err != nil {
-			return fmt.Errorf("could not compile pattern %+q: %v", p, err)
+			return fmt.Errorf("could not compile pattern %+q: %w", p, err)
 		}
 		s := match.Graphviz(p, g.(match.Matcher))
 		if auto {

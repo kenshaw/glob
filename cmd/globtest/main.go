@@ -38,7 +38,7 @@ func run(pattern, sep, fixture string, verbose bool) error {
 	}
 	g, err := glob.Compile(pattern, separators...)
 	if err != nil {
-		return fmt.Errorf("could not compile pattern: %v", err)
+		return fmt.Errorf("could not compile pattern: %w", err)
 	}
 	if !verbose {
 		fmt.Println(g.Match(fixture))
