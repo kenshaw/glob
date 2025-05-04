@@ -38,24 +38,6 @@ func TestAppendMerge(t *testing.T) {
 	}
 }
 
-func BenchmarkAppendMerge(b *testing.B) {
-	s1 := []int{0, 1, 3, 6, 7}
-	s2 := []int{0, 1, 3}
-	for b.Loop() {
-		appendMerge(s1, s2)
-	}
-}
-
-func BenchmarkAppendMergeParallel(b *testing.B) {
-	s1 := []int{0, 1, 3, 6, 7}
-	s2 := []int{0, 1, 3}
-	b.RunParallel(func(pb *testing.PB) {
-		for pb.Next() {
-			appendMerge(s1, s2)
-		}
-	})
-}
-
 func getTable() []int {
 	table := make([]int, utf8.MaxRune+1)
 	for i := 0; i <= utf8.MaxRune; i++ {
@@ -67,15 +49,3 @@ func getTable() []int {
 var table = getTable()
 
 const runeToLen = 'q'
-
-func BenchmarkRuneLenFromTable(b *testing.B) {
-	for b.Loop() {
-		_ = table[runeToLen]
-	}
-}
-
-func BenchmarkRuneLenFromUTF8(b *testing.B) {
-	for b.Loop() {
-		_ = utf8.RuneLen(runeToLen)
-	}
-}

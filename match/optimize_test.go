@@ -2,14 +2,15 @@ package match
 
 import (
 	"reflect"
+	"strconv"
 	"testing"
 )
 
 var separators = []rune{'.'}
 
 func TestCompile(t *testing.T) {
-	for _, test := range []struct {
-		in  []Matcher
+	for i, test := range []struct {
+		m   []Matcher
 		exp Matcher
 	}{
 		{
@@ -93,16 +94,16 @@ func TestCompile(t *testing.T) {
 			}),
 		},
 	} {
-		t.Run("", func(t *testing.T) {
-			act, err := Compile(test.in)
+		t.Run(strconv.Itoa(i), func(t *testing.T) {
+			m, err := Compile(test.m)
 			if err != nil {
 				t.Fatalf("Compile() error: %s", err)
 			}
-			if !reflect.DeepEqual(act, test.exp) {
+			if !reflect.DeepEqual(m, test.exp) {
 				t.Errorf(
 					"Compile():\nact: %#v;\nexp: %#v;\ngraphviz:\n%s\n%s",
-					act, test.exp,
-					Graphviz("act", act), Graphviz("exp", test.exp),
+					m, test.exp,
+					Graphviz("act", m), Graphviz("exp", test.exp),
 				)
 			}
 		})
@@ -110,11 +111,11 @@ func TestCompile(t *testing.T) {
 }
 
 func TestMinimize(t *testing.T) {
-	for _, test := range []struct {
-		in, exp []Matcher
+	for i, test := range []struct {
+		m, exp []Matcher
 	}{
 		{
-			in: []Matcher{
+			m: []Matcher{
 				NewRange('a', 'c', true),
 				NewList([]rune{'z', 't', 'e'}, false),
 				NewText("c"),
@@ -131,7 +132,7 @@ func TestMinimize(t *testing.T) {
 			},
 		},
 		{
-			in: []Matcher{
+			m: []Matcher{
 				NewRange('a', 'c', true),
 				NewList([]rune{'z', 't', 'e'}, false),
 				NewText("c"),
@@ -151,8 +152,8 @@ func TestMinimize(t *testing.T) {
 			},
 		},
 	} {
-		t.Run("", func(t *testing.T) {
-			act := Minimize(test.in)
+		t.Run(strconv.Itoa(i), func(t *testing.T) {
+			act := Minimize(test.m)
 			if !reflect.DeepEqual(act, test.exp) {
 				t.Errorf(
 					"Minimize():\nact: %#v;\nexp: %#v",
