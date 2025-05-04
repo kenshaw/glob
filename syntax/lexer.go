@@ -68,35 +68,33 @@ func (typ TokenType) String() string {
 }
 
 type Token struct {
-	Type TokenType
-	Raw  string
+	Token TokenType
+	Raw   string
 }
 
-func (t Token) String() string {
-	return fmt.Sprintf("%v<%q>", t.Type, t.Raw)
+func (token Token) String() string {
+	return fmt.Sprintf("%s<%q>", token.Token, token.Raw)
 }
 
 type tokens []Token
 
-func (i *tokens) shift() (ret Token) {
-	ret = (*i)[0]
-	copy(*i, (*i)[1:])
-	*i = (*i)[:len(*i)-1]
+func (v *tokens) shift() (ret Token) {
+	ret = (*v)[0]
+	copy(*v, (*v)[1:])
+	*v = (*v)[:len(*v)-1]
 	return
 }
 
-func (i *tokens) push(v Token) {
-	*i = append(*i, v)
+func (v *tokens) push(token Token) {
+	*v = append(*v, token)
 }
 
-func (i *tokens) empty() bool {
-	return len(*i) == 0
+func (v *tokens) empty() bool {
+	return len(*v) == 0
 }
 
-var eof rune = 0
-
-type lexer struct {
-	data         string
+type Lexer struct {
+	src          string
 	pos          int
 	err          error
 	tokens       tokens
@@ -106,15 +104,15 @@ type lexer struct {
 	hasRune      bool
 }
 
-func NewLexer(source string) *lexer {
-	l := &lexer{
-		data:   source,
-		tokens: tokens(make([]Token, 0, 4)),
+func NewLexer(src string) *Lexer {
+	l := &Lexer{
+		src:    src,
+		tokens: make(tokens, 0, 4),
 	}
 	return l
 }
 
-func (l *lexer) Next() Token {
+func (l *Lexer) Next() Token {
 	if l.err != nil {
 		return Token{TokenError, l.err.Error()}
 	}
@@ -125,20 +123,19 @@ func (l *lexer) Next() Token {
 	return l.Next()
 }
 
-func (l *lexer) peek() (r rune, w int) {
-	if l.pos == len(l.data) {
-		return eof, 0
+func (l *Lexer) peek() (r rune, w int) {
+	if l.pos == len(l.src) {
+		return 0, 0
 	}
-	r, w = utf8.DecodeRuneInString(l.data[l.pos:])
+	r, w = utf8.DecodeRuneInString(l.src[l.pos:])
 	if r == utf8.RuneError {
 		l.errorf("could not read rune")
-		r = eof
-		w = 0
+		r, w = 0, 0
 	}
 	return
 }
 
-func (l *lexer) read() rune {
+func (l *Lexer) read() rune {
 	if l.hasRune {
 		l.hasRune = false
 		l.seek(l.lastRuneSize)
@@ -151,11 +148,11 @@ func (l *lexer) read() rune {
 	return r
 }
 
-func (l *lexer) seek(w int) {
+func (l *Lexer) seek(w int) {
 	l.pos += w
 }
 
-func (l *lexer) unread() {
+func (l *Lexer) unread() {
 	if l.hasRune {
 		l.errorf("could not unread rune")
 		return
@@ -164,26 +161,26 @@ func (l *lexer) unread() {
 	l.hasRune = true
 }
 
-func (l *lexer) errorf(f string, v ...any) {
+func (l *Lexer) errorf(f string, v ...any) {
 	l.err = fmt.Errorf(f, v...)
 }
 
-func (l *lexer) inTerms() bool {
+func (l *Lexer) inTerms() bool {
 	return l.termsLevel > 0
 }
 
-func (l *lexer) termsEnter() {
+func (l *Lexer) termsEnter() {
 	l.termsLevel++
 }
 
-func (l *lexer) termsLeave() {
+func (l *Lexer) termsLeave() {
 	l.termsLevel--
 }
 
-func (l *lexer) fetchItem() {
+func (l *Lexer) fetchItem() {
 	r := l.read()
 	switch {
-	case r == eof:
+	case r == 0:
 		l.tokens.push(Token{TokenEOF, ""})
 	case r == char_terms_open:
 		l.termsEnter()
@@ -217,13 +214,13 @@ func (l *lexer) fetchItem() {
 	}
 }
 
-func (l *lexer) fetchRange() {
+func (l *Lexer) fetchRange() {
 	var wantHi bool
 	var wantClose bool
 	var seenNot bool
 	for {
 		r := l.read()
-		if r == eof {
+		if r == 0 {
 			l.errorf("unexpected end of input")
 			return
 		}
@@ -258,13 +255,13 @@ func (l *lexer) fetchRange() {
 	}
 }
 
-func (l *lexer) fetchText(breakers []rune) {
+func (l *Lexer) fetchText(breakers []rune) {
 	var data []rune
 	var escaped bool
-reading:
+loop:
 	for {
 		r := l.read()
-		if r == eof {
+		if r == 0 {
 			break
 		}
 		if !escaped {
@@ -274,7 +271,7 @@ reading:
 			}
 			if runes.IndexRune(breakers, r) != -1 {
 				l.unread()
-				break reading
+				break loop
 			}
 		}
 		escaped = false

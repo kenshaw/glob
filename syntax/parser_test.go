@@ -2,27 +2,14 @@ package syntax
 
 import (
 	"reflect"
+	"strconv"
 	"testing"
 )
 
-type stubLexer struct {
-	tokens []Token
-	pos    int
-}
-
-func (s *stubLexer) Next() (ret Token) {
-	if s.pos == len(s.tokens) {
-		return Token{TokenEOF, ""}
-	}
-	ret = s.tokens[s.pos]
-	s.pos++
-	return
-}
-
-func TestParseString(t *testing.T) {
-	for id, test := range []struct {
+func TestParse(t *testing.T) {
+	for i, test := range []struct {
 		tokens []Token
-		tree   *Node
+		exp    *Node
 	}{
 		{
 			// pattern: "abc",
@@ -30,8 +17,8 @@ func TestParseString(t *testing.T) {
 				{TokenText, "abc"},
 				{TokenEOF, ""},
 			},
-			tree: NewNode(KindPattern, nil,
-				NewNode(KindText, Text{Text: "abc"}),
+			exp: New(KindPattern, nil,
+				New(KindText, Text{Text: "abc"}),
 			),
 		},
 		{
@@ -42,10 +29,10 @@ func TestParseString(t *testing.T) {
 				{TokenText, "c"},
 				{TokenEOF, ""},
 			},
-			tree: NewNode(KindPattern, nil,
-				NewNode(KindText, Text{Text: "a"}),
-				NewNode(KindAny, nil),
-				NewNode(KindText, Text{Text: "c"}),
+			exp: New(KindPattern, nil,
+				New(KindText, Text{Text: "a"}),
+				New(KindAny, nil),
+				New(KindText, Text{Text: "c"}),
 			),
 		},
 		{
@@ -56,10 +43,10 @@ func TestParseString(t *testing.T) {
 				{TokenText, "c"},
 				{TokenEOF, ""},
 			},
-			tree: NewNode(KindPattern, nil,
-				NewNode(KindText, Text{Text: "a"}),
-				NewNode(KindSuper, nil),
-				NewNode(KindText, Text{Text: "c"}),
+			exp: New(KindPattern, nil,
+				New(KindText, Text{Text: "a"}),
+				New(KindSuper, nil),
+				New(KindText, Text{Text: "c"}),
 			),
 		},
 		{
@@ -70,10 +57,10 @@ func TestParseString(t *testing.T) {
 				{TokenText, "c"},
 				{TokenEOF, ""},
 			},
-			tree: NewNode(KindPattern, nil,
-				NewNode(KindText, Text{Text: "a"}),
-				NewNode(KindSingle, nil),
-				NewNode(KindText, Text{Text: "c"}),
+			exp: New(KindPattern, nil,
+				New(KindText, Text{Text: "a"}),
+				New(KindSingle, nil),
+				New(KindText, Text{Text: "c"}),
 			),
 		},
 		{
@@ -87,8 +74,8 @@ func TestParseString(t *testing.T) {
 				{TokenRangeClose, "]"},
 				{TokenEOF, ""},
 			},
-			tree: NewNode(KindPattern, nil,
-				NewNode(KindRange, Range{Lo: 'a', Hi: 'z', Not: true}),
+			exp: New(KindPattern, nil,
+				New(KindRange, Range{Lo: 'a', Hi: 'z', Not: true}),
 			),
 		},
 		{
@@ -99,8 +86,8 @@ func TestParseString(t *testing.T) {
 				{TokenRangeClose, "]"},
 				{TokenEOF, ""},
 			},
-			tree: NewNode(KindPattern, nil,
-				NewNode(KindList, List{Chars: "az"}),
+			exp: New(KindPattern, nil,
+				New(KindList, List{Chars: "az"}),
 			),
 		},
 		{
@@ -113,13 +100,13 @@ func TestParseString(t *testing.T) {
 				{TokenTermsClose, "}"},
 				{TokenEOF, ""},
 			},
-			tree: NewNode(KindPattern, nil,
-				NewNode(KindAnyOf, nil,
-					NewNode(KindPattern, nil,
-						NewNode(KindText, Text{Text: "a"}),
+			exp: New(KindPattern, nil,
+				New(KindAnyOf, nil,
+					New(KindPattern, nil,
+						New(KindText, Text{Text: "a"}),
 					),
-					NewNode(KindPattern, nil,
-						NewNode(KindText, Text{Text: "z"}),
+					New(KindPattern, nil,
+						New(KindText, Text{Text: "z"}),
 					),
 				),
 			),
@@ -136,17 +123,17 @@ func TestParseString(t *testing.T) {
 				{TokenAny, "*"},
 				{TokenEOF, ""},
 			},
-			tree: NewNode(KindPattern, nil,
-				NewNode(KindText, Text{Text: "/"}),
-				NewNode(KindAnyOf, nil,
-					NewNode(KindPattern, nil,
-						NewNode(KindText, Text{Text: "z"}),
+			exp: New(KindPattern, nil,
+				New(KindText, Text{Text: "/"}),
+				New(KindAnyOf, nil,
+					New(KindPattern, nil,
+						New(KindText, Text{Text: "z"}),
 					),
-					NewNode(KindPattern, nil,
-						NewNode(KindText, Text{Text: "ab"}),
+					New(KindPattern, nil,
+						New(KindText, Text{Text: "ab"}),
 					),
 				),
-				NewNode(KindAny, nil),
+				New(KindAny, nil),
 			),
 		},
 		{
@@ -176,41 +163,57 @@ func TestParseString(t *testing.T) {
 				{TokenTermsClose, "}"},
 				{TokenEOF, ""},
 			},
-			tree: NewNode(KindPattern, nil,
-				NewNode(KindAnyOf, nil,
-					NewNode(KindPattern, nil,
-						NewNode(KindText, Text{Text: "a"}),
+			exp: New(KindPattern, nil,
+				New(KindAnyOf, nil,
+					New(KindPattern, nil,
+						New(KindText, Text{Text: "a"}),
 					),
-					NewNode(KindPattern, nil,
-						NewNode(KindAnyOf, nil,
-							NewNode(KindPattern, nil,
-								NewNode(KindText, Text{Text: "x"}),
+					New(KindPattern, nil,
+						New(KindAnyOf, nil,
+							New(KindPattern, nil,
+								New(KindText, Text{Text: "x"}),
 							),
-							NewNode(KindPattern, nil,
-								NewNode(KindText, Text{Text: "y"}),
+							New(KindPattern, nil,
+								New(KindText, Text{Text: "y"}),
 							),
 						),
 					),
-					NewNode(KindPattern, nil,
-						NewNode(KindSingle, nil),
+					New(KindPattern, nil,
+						New(KindSingle, nil),
 					),
-					NewNode(KindPattern, nil,
-						NewNode(KindRange, Range{Lo: 'a', Hi: 'z', Not: false}),
+					New(KindPattern, nil,
+						New(KindRange, Range{Lo: 'a', Hi: 'z', Not: false}),
 					),
-					NewNode(KindPattern, nil,
-						NewNode(KindList, List{Chars: "qwe", Not: true}),
+					New(KindPattern, nil,
+						New(KindList, List{Chars: "qwe", Not: true}),
 					),
 				),
 			),
 		},
 	} {
-		lexer := &stubLexer{tokens: test.tokens}
-		result, err := Parse(lexer)
-		if err != nil {
-			t.Errorf("[%d] unexpected error: %s", id, err)
-		}
-		if !reflect.DeepEqual(test.tree, result) {
-			t.Errorf("[%d] Parse():\nact:\t%s\nexp:\t%s\n", id, result, test.tree)
-		}
+		t.Run(strconv.Itoa(i), func(t *testing.T) {
+			l := &stubLexer{tokens: test.tokens}
+			tree, err := parse(l)
+			if err != nil {
+				t.Fatalf("unexpected error: %s", err)
+			}
+			if !reflect.DeepEqual(tree, test.exp) {
+				t.Errorf("expected:\n%v\ngot:\n%v", test.exp, tree)
+			}
+		})
 	}
+}
+
+type stubLexer struct {
+	tokens []Token
+	pos    int
+}
+
+func (s *stubLexer) Next() (ret Token) {
+	if s.pos == len(s.tokens) {
+		return Token{TokenEOF, ""}
+	}
+	ret = s.tokens[s.pos]
+	s.pos++
+	return
 }

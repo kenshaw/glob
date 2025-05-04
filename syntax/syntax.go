@@ -28,7 +28,7 @@ func minimizeAnyOf(t *Node) *Node {
 	}
 	var result []*Node
 	if commonLeftCount > 0 {
-		result = append(result, NewNode(KindPattern, nil, commonLeft...))
+		result = append(result, New(KindPattern, nil, commonLeft...))
 	}
 	var anyOf []*Node
 	for _, child := range t.Children {
@@ -37,9 +37,9 @@ func minimizeAnyOf(t *Node) *Node {
 		if len(reuse) == 0 {
 			// this pattern is completely reduced by commonLeft and commonRight
 			// patterns so it become nothing
-			node = NewNode(KindNothing, nil)
+			node = New(KindNothing, nil)
 		} else {
-			node = NewNode(KindPattern, nil, reuse...)
+			node = New(KindPattern, nil, reuse...)
 		}
 		anyOf = AppendUnique(anyOf, node)
 	}
@@ -47,12 +47,12 @@ func minimizeAnyOf(t *Node) *Node {
 	case len(anyOf) == 1 && anyOf[0].Kind != KindNothing:
 		result = append(result, anyOf[0])
 	case len(anyOf) > 1:
-		result = append(result, NewNode(KindAnyOf, nil, anyOf...))
+		result = append(result, New(KindAnyOf, nil, anyOf...))
 	}
 	if commonRightCount > 0 {
-		result = append(result, NewNode(KindPattern, nil, commonRight...))
+		result = append(result, New(KindPattern, nil, commonRight...))
 	}
-	return NewNode(KindPattern, nil, result...)
+	return New(KindPattern, nil, result...)
 }
 
 func CommonChildren(nodes []*Node) (commonLeft, commonRight []*Node) {

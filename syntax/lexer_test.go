@@ -4,7 +4,7 @@ import (
 	"testing"
 )
 
-func TestLexGood(t *testing.T) {
+func TestLexer(t *testing.T) {
 	for id, test := range []struct {
 		pattern string
 		items   []Token
@@ -180,12 +180,12 @@ func TestLexGood(t *testing.T) {
 	} {
 		lexer := NewLexer(test.pattern)
 		for i, exp := range test.items {
-			act := lexer.Next()
-			if act.Type != exp.Type {
-				t.Errorf("#%d %q: wrong %d-th item type: exp: %q; act: %q\n\t(%s vs %s)", id, test.pattern, i, exp.Type, act.Type, exp, act)
+			token := lexer.Next()
+			if token.Token != exp.Token {
+				t.Errorf("#%d %q: wrong %d-th item type: exp: %q; act: %q\n\t(%s vs %s)", id, test.pattern, i, exp.Token, token.Token, exp, token)
 			}
-			if act.Raw != exp.Raw {
-				t.Errorf("#%d %q: wrong %d-th item contents: exp: %q; act: %q\n\t(%s vs %s)", id, test.pattern, i, exp.Raw, act.Raw, exp, act)
+			if token.Raw != exp.Raw {
+				t.Errorf("#%d %q: wrong %d-th item contents: exp: %q; act: %q\n\t(%s vs %s)", id, test.pattern, i, exp.Raw, token.Raw, exp, token)
 			}
 		}
 	}
