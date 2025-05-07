@@ -175,7 +175,7 @@ const (
 	pattern_plain                              = "google.com"
 	regexp_plain                               = `^google\.com$`
 	fixture_plain_match                        = "google.com"
-	fixture_plain_mismatch                     = "kenshaw.com"
+	fixture_plain_mismatch                     = "example.com"
 	pattern_multiple                           = "https://*.google.*"
 	regexp_multiple                            = `^https:\/\/.*\.google\..*$`
 	fixture_multiple_match                     = "https://account.google.com"
@@ -184,11 +184,11 @@ const (
 	regexp_alternatives                        = `^(https:\/\/.*\.google\..*|.*yandex\..*|.*yahoo\..*|.*mail\.ru)$`
 	fixture_alternatives_match                 = "http://yahoo.com"
 	fixture_alternatives_mismatch              = "http://google.com"
-	pattern_alternatives_suffix                = "{https://*kenshaw.com,http://exclude.kenshaw.com}"
-	regexp_alternatives_suffix                 = `^(https:\/\/.*kenshaw\.com|http://exclude.kenshaw.com)$`
-	fixture_alternatives_suffix_first_match    = "https://safe.kenshaw.com"
-	fixture_alternatives_suffix_first_mismatch = "http://safe.kenshaw.com"
-	fixture_alternatives_suffix_second         = "http://exclude.kenshaw.com"
+	pattern_alternatives_suffix                = "{https://*example.com,http://exclude.example.com}"
+	regexp_alternatives_suffix                 = `^(https:\/\/.*example\.com|http://exclude.example.com)$`
+	fixture_alternatives_suffix_first_match    = "https://safe.example.com"
+	fixture_alternatives_suffix_first_mismatch = "http://safe.example.com"
+	fixture_alternatives_suffix_second         = "http://exclude.example.com"
 	pattern_prefix                             = "abc*"
 	regexp_prefix                              = `^abc.*$`
 	pattern_suffix                             = "*def"
