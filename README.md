@@ -53,8 +53,8 @@ Run `go test -bench=.` from source root to see the benchmarks:
 | `https://*.google.*`                                | `https://google.com`          | `false` | 66            |
 | `{https://*.google.*,*yandex.*,*yahoo.*,*mail.ru}`  | `http://yahoo.com`            | `true`  | 163           |
 | `{https://*.google.*,*yandex.*,*yahoo.*,*mail.ru}`  | `http://google.com`           | `false` | 197           |
-| `{https://*kenshaw.com,http://exclude.kenshaw.com}` | `https://safe.kenshaw.com`    | `true`  | 22            |
-| `{https://*kenshaw.com,http://exclude.kenshaw.com}` | `http://safe.kenshaw.com`     | `false` | 24            |
+| `{https://*example.com,http://exclude.example.com}` | `https://safe.example.com`    | `true`  | 22            |
+| `{https://*example.com,http://exclude.example.com}` | `http://safe.example.com`     | `false` | 24            |
 | `abc*`                                              | `abcdef`                      | `true`  | 8.15          |
 | `abc*`                                              | `af`                          | `false` | 5.68          |
 | `*def`                                              | `abcdef`                      | `true`  | 8.84          |
@@ -72,8 +72,8 @@ The same things with `regexp` package:
 | `^https:\/\/.*\.google\..*$`                                          | `https://google.com`          | `false` | 767           |
 | `^(https:\/\/.*\.google\..*\|.*yandex\..*\|.*yahoo\..*\|.*mail\.ru)$` | `http://yahoo.com`            | `true`  | 1435          |
 | `^(https:\/\/.*\.google\..*\|.*yandex\..*\|.*yahoo\..*\|.*mail\.ru)$` | `http://google.com`           | `false` | 1674          |
-| `^(https:\/\/.*kenshaw\.com\|http://exclude.kenshaw.com)$`            | `https://safe.kenshaw.com`    | `true`  | 1039          |
-| `^(https:\/\/.*kenshaw\.com\|http://exclude.kenshaw.com)$`            | `http://safe.kenshaw.com`     | `false` | 272           |
+| `^(https:\/\/.*example\.com\|http://exclude.example.com)$`            | `https://safe.example.com`    | `true`  | 1039          |
+| `^(https:\/\/.*example\.com\|http://exclude.example.com)$`            | `http://safe.example.com`     | `false` | 272           |
 | `^abc.*$`                                                             | `abcdef`                      | `true`  | 237           |
 | `^abc.*$`                                                             | `af`                          | `false` | 100           |
 | `^.*def$`                                                             | `abcdef`                      | `true`  | 464           |
