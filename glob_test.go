@@ -1,72 +1,16 @@
 package glob
 
 import (
+	"strconv"
 	"testing"
 )
 
-const (
-	pattern_all                                = "[a-z][!a-x]*cat*[h][!b]*eyes*"
-	regexp_all                                 = `^[a-z][^a-x].*cat.*[h][^b].*eyes.*$`
-	fixture_all_match                          = "my cat has very bright eyes"
-	fixture_all_mismatch                       = "my dog has very bright eyes"
-	pattern_plain                              = "google.com"
-	regexp_plain                               = `^google\.com$`
-	fixture_plain_match                        = "google.com"
-	fixture_plain_mismatch                     = "kenshaw.com"
-	pattern_multiple                           = "https://*.google.*"
-	regexp_multiple                            = `^https:\/\/.*\.google\..*$`
-	fixture_multiple_match                     = "https://account.google.com"
-	fixture_multiple_mismatch                  = "https://google.com"
-	pattern_alternatives                       = "{https://*.google.*,*yandex.*,*yahoo.*,*mail.ru}"
-	regexp_alternatives                        = `^(https:\/\/.*\.google\..*|.*yandex\..*|.*yahoo\..*|.*mail\.ru)$`
-	fixture_alternatives_match                 = "http://yahoo.com"
-	fixture_alternatives_mismatch              = "http://google.com"
-	pattern_alternatives_suffix                = "{https://*kenshaw.com,http://exclude.kenshaw.com}"
-	regexp_alternatives_suffix                 = `^(https:\/\/.*kenshaw\.com|http://exclude.kenshaw.com)$`
-	fixture_alternatives_suffix_first_match    = "https://safe.kenshaw.com"
-	fixture_alternatives_suffix_first_mismatch = "http://safe.kenshaw.com"
-	fixture_alternatives_suffix_second         = "http://exclude.kenshaw.com"
-	pattern_prefix                             = "abc*"
-	regexp_prefix                              = `^abc.*$`
-	pattern_suffix                             = "*def"
-	regexp_suffix                              = `^.*def$`
-	pattern_prefix_suffix                      = "ab*ef"
-	regexp_prefix_suffix                       = `^ab.*ef$`
-	fixture_prefix_suffix_match                = "abcdef"
-	fixture_prefix_suffix_mismatch             = "af"
-	pattern_alternatives_combine_lite          = "{abc*def,abc?def,abc[zte]def}"
-	regexp_alternatives_combine_lite           = `^(abc.*def|abc.def|abc[zte]def)$`
-	fixture_alternatives_combine_lite          = "abczdef"
-	pattern_alternatives_combine_hard          = "{abc*[a-c]def,abc?[d-g]def,abc[zte]?def}"
-	regexp_alternatives_combine_hard           = `^(abc.*[a-c]def|abc.[d-g]def|abc[zte].def)$`
-	fixture_alternatives_combine_hard          = "abczqdef"
-)
-
-type test struct {
-	pattern, match string
-	should         bool
-	delimiters     []rune
-}
-
-func glob(s bool, p, m string, d ...rune) test {
-	return test{
-		should:     s,
-		pattern:    p,
-		match:      m,
-		delimiters: d,
-	}
-}
-
-func globc(p string, d ...rune) test {
-	return test{pattern: p, delimiters: d}
-}
-
-func TestCompilation(t *testing.T) {
-	for _, test := range []test{
+func TestCompile(t *testing.T) {
+	for i, test := range []test{
 		globc("{*,**,?}", '.'),
 		globc("{*.google.*,yandex.*}", '.'),
 	} {
-		t.Run("", func(t *testing.T) {
+		t.Run(strconv.Itoa(i), func(t *testing.T) {
 			_, err := Compile(test.pattern, test.delimiters...)
 			if err != nil {
 				t.Fatal(err)
@@ -76,7 +20,7 @@ func TestCompilation(t *testing.T) {
 }
 
 func TestGlob(t *testing.T) {
-	for _, test := range []test{
+	for i, test := range []test{
 		glob(true, "* ?at * eyes", "my cat has very bright eyes"),
 		glob(true, "", ""),
 		glob(false, "", "b"),
@@ -158,7 +102,7 @@ func TestGlob(t *testing.T) {
 		glob(true, pattern_prefix_suffix, fixture_prefix_suffix_match),
 		glob(false, pattern_prefix_suffix, fixture_prefix_suffix_mismatch),
 	} {
-		t.Run("", func(t *testing.T) {
+		t.Run(strconv.Itoa(i), func(t *testing.T) {
 			defer func() {
 				if thePanic := recover(); thePanic != nil {
 					t.Fatalf("panic recovered: %v", thePanic)
@@ -178,31 +122,76 @@ func TestGlob(t *testing.T) {
 
 func TestQuoteMeta(t *testing.T) {
 	for id, test := range []struct {
-		in, out string
+		s, exp string
 	}{
-		{
-			in:  `[foo*]`,
-			out: `\[foo\*\]`,
-		},
-		{
-			in:  `{foo*}`,
-			out: `\{foo\*\}`,
-		},
-		{
-			in:  `*?\[]{}`,
-			out: `\*\?\\\[\]\{\}`,
-		},
-		{
-			in:  `some text and *?\[]{}`,
-			out: `some text and \*\?\\\[\]\{\}`,
-		},
+		{`[foo*]`, `\[foo\*\]`},
+		{`{foo*}`, `\{foo\*\}`},
+		{`*?\[]{}`, `\*\?\\\[\]\{\}`},
+		{`some text and *?\[]{}`, `some text and \*\?\\\[\]\{\}`},
 	} {
-		act := QuoteMeta(test.in)
-		if act != test.out {
-			t.Errorf("#%d QuoteMeta(%q) = %q; want %q", id, test.in, act, test.out)
+		act := QuoteMeta(test.s)
+		if act != test.exp {
+			t.Errorf("#%d QuoteMeta(%q) = %q; want %q", id, test.s, act, test.exp)
 		}
 		if _, err := Compile(act); err != nil {
-			t.Errorf("#%d _, err := Compile(QuoteMeta(%q) = %q); err = %q", id, test.in, act, err)
+			t.Errorf("#%d _, err := Compile(QuoteMeta(%q) = %q); err = %q", id, test.s, act, err)
 		}
 	}
+}
+
+const (
+	pattern_all                                = "[a-z][!a-x]*cat*[h][!b]*eyes*"
+	regexp_all                                 = `^[a-z][^a-x].*cat.*[h][^b].*eyes.*$`
+	fixture_all_match                          = "my cat has very bright eyes"
+	fixture_all_mismatch                       = "my dog has very bright eyes"
+	pattern_plain                              = "google.com"
+	regexp_plain                               = `^google\.com$`
+	fixture_plain_match                        = "google.com"
+	fixture_plain_mismatch                     = "kenshaw.com"
+	pattern_multiple                           = "https://*.google.*"
+	regexp_multiple                            = `^https:\/\/.*\.google\..*$`
+	fixture_multiple_match                     = "https://account.google.com"
+	fixture_multiple_mismatch                  = "https://google.com"
+	pattern_alternatives                       = "{https://*.google.*,*yandex.*,*yahoo.*,*mail.ru}"
+	regexp_alternatives                        = `^(https:\/\/.*\.google\..*|.*yandex\..*|.*yahoo\..*|.*mail\.ru)$`
+	fixture_alternatives_match                 = "http://yahoo.com"
+	fixture_alternatives_mismatch              = "http://google.com"
+	pattern_alternatives_suffix                = "{https://*kenshaw.com,http://exclude.kenshaw.com}"
+	regexp_alternatives_suffix                 = `^(https:\/\/.*kenshaw\.com|http://exclude.kenshaw.com)$`
+	fixture_alternatives_suffix_first_match    = "https://safe.kenshaw.com"
+	fixture_alternatives_suffix_first_mismatch = "http://safe.kenshaw.com"
+	fixture_alternatives_suffix_second         = "http://exclude.kenshaw.com"
+	pattern_prefix                             = "abc*"
+	regexp_prefix                              = `^abc.*$`
+	pattern_suffix                             = "*def"
+	regexp_suffix                              = `^.*def$`
+	pattern_prefix_suffix                      = "ab*ef"
+	regexp_prefix_suffix                       = `^ab.*ef$`
+	fixture_prefix_suffix_match                = "abcdef"
+	fixture_prefix_suffix_mismatch             = "af"
+	pattern_alternatives_combine_lite          = "{abc*def,abc?def,abc[zte]def}"
+	regexp_alternatives_combine_lite           = `^(abc.*def|abc.def|abc[zte]def)$`
+	fixture_alternatives_combine_lite          = "abczdef"
+	pattern_alternatives_combine_hard          = "{abc*[a-c]def,abc?[d-g]def,abc[zte]?def}"
+	regexp_alternatives_combine_hard           = `^(abc.*[a-c]def|abc.[d-g]def|abc[zte].def)$`
+	fixture_alternatives_combine_hard          = "abczqdef"
+)
+
+type test struct {
+	pattern, match string
+	should         bool
+	delimiters     []rune
+}
+
+func glob(s bool, p, m string, d ...rune) test {
+	return test{
+		should:     s,
+		pattern:    p,
+		match:      m,
+		delimiters: d,
+	}
+}
+
+func globc(p string, d ...rune) test {
+	return test{pattern: p, delimiters: d}
 }
