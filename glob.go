@@ -2,8 +2,6 @@
 package glob
 
 import (
-	"fmt"
-
 	"github.com/kenshaw/glob/syntax"
 )
 
@@ -20,7 +18,7 @@ func New() *Glob {
 
 // String satisfies the [fmt.Stringer] interface.
 func (g *Glob) String() string {
-	return fmt.Sprintf("%v", g.Matcher)
+	return g.pattern
 }
 
 // UnmarshalText satisfies the [encoding.TextUnarshaler]
