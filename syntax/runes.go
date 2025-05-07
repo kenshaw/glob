@@ -50,17 +50,6 @@ func runesExactlyRunesCount(s string, n int) bool {
 	return m == n
 }
 
-func runesAtLeastRunesCount(s string, n int) bool {
-	var m int
-	for range s {
-		m++
-		if m >= n {
-			return true
-		}
-	}
-	return false
-}
-
 func runesIndexAnyRune(s string, rs []rune) int {
 	for _, r := range rs {
 		if i := strings.IndexRune(s, r); i != -1 {
@@ -163,33 +152,6 @@ func runesIndexAny(s, chars []rune) int {
 	return -1
 }
 
-func runesContains(s, needle []rune) bool {
-	return runesIndex(s, needle) >= 0
-}
-
-func runesMax(s []rune) (max rune) {
-	for _, r := range s {
-		if r > max {
-			max = r
-		}
-	}
-	return
-}
-
-func runesMin(s []rune) rune {
-	min := rune(-1)
-	for _, r := range s {
-		if min == -1 {
-			min = r
-			continue
-		}
-		if r < min {
-			min = r
-		}
-	}
-	return min
-}
-
 func runesIndexRune(s []rune, r rune) int {
 	for i, c := range s {
 		if c == r {
@@ -219,14 +181,4 @@ func runesEqual(a, b []rune) bool {
 		return true
 	}
 	return false
-}
-
-// HasPrefix tests whether the string s begins with prefix.
-func runesHasPrefix(s, prefix []rune) bool {
-	return len(s) >= len(prefix) && runesEqual(s[0:len(prefix)], prefix)
-}
-
-// HasSuffix tests whether the string s ends with suffix.
-func runesHasSuffix(s, suffix []rune) bool {
-	return len(s) >= len(suffix) && runesEqual(s[len(s)-len(suffix):], suffix)
 }

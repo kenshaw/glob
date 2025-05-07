@@ -2,6 +2,7 @@ package syntax
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"unicode/utf8"
 )
@@ -159,8 +160,8 @@ func (l *Lexer) unread() {
 	l.hasRune = true
 }
 
-func (l *Lexer) errorf(f string, v ...any) {
-	l.err = fmt.Errorf(f, v...)
+func (l *Lexer) errorf(s string) {
+	l.err = errors.New(s)
 }
 
 func (l *Lexer) inTerms() bool {
