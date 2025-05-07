@@ -36,7 +36,7 @@ func BenchmarkAllRegexpMatch(b *testing.B) {
 }
 
 func BenchmarkAllGlobMismatch(b *testing.B) {
-	g := MustCompile(pattern_all)
+	g := Must(pattern_all)
 	fmt.Println(syntax.Graphviz(pattern_all, g))
 	for b.Loop() {
 		_ = g.Match(fixture_all_mismatch)

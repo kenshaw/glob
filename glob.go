@@ -54,9 +54,9 @@ func Compile(pattern string, separators ...rune) (*Glob, error) {
 	return &Glob{m}, nil
 }
 
-// MustCompile is the same as Compile, except that if Compile returns error,
-// this will panic
-func MustCompile(pattern string, separators ...rune) *Glob {
+// Must is the same as Compile, except that if Compile returns error, this will
+// panic
+func Must(pattern string, separators ...rune) *Glob {
 	g, err := Compile(pattern, separators...)
 	if err != nil {
 		panic(err)
@@ -64,10 +64,10 @@ func MustCompile(pattern string, separators ...rune) *Glob {
 	return g
 }
 
-// QuoteMeta returns a string that quotes all glob pattern meta characters
-// inside the argument text; For example, QuoteMeta(`{foo*}`) returns
+// Quote returns a string that quotes all glob pattern meta characters
+// inside the argument text; For example, Quote(`{foo*}`) returns
 // `\[foo\*\]`.
-func QuoteMeta(s string) string {
+func Quote(s string) string {
 	b := make([]byte, 2*len(s))
 	// a byte loop is correct because all meta characters are ASCII
 	j := 0

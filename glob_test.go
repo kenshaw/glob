@@ -6,12 +6,108 @@ import (
 )
 
 func TestCompile(t *testing.T) {
-	for i, test := range []test{
-		globc("{*,**,?}", '.'),
-		globc("{*.google.*,yandex.*}", '.'),
+	for i, test := range []globTest{
+		g(true, "* ?at * eyes", "my cat has very bright eyes"),
+		g(true, "", ""),
+		g(false, "", "b"),
+		g(true, "*ä", "åä"),
+		g(true, "abc", "abc"),
+		g(true, "a*c", "abc"),
+		g(true, "a*c", "a12345c"),
+		g(true, "a?c", "a1c"),
+		g(true, "a.b", "a.b", '.'),
+		g(true, "a.*", "a.b", '.'),
+		g(true, "a.**", "a.b.c", '.'),
+		g(true, "a.?.c", "a.b.c", '.'),
+		g(true, "a.?.?", "a.b.c", '.'),
+		g(true, "?at", "cat"),
+		g(true, "?at", "fat"),
+		g(true, "*", "abc"),
+		g(true, `\*`, "*"),
+		g(true, "**", "a.b.c", '.'),
+		g(false, "?at", "at"),
+		g(false, "?at", "fat", 'f'),
+		g(false, "a.*", "a.b.c", '.'),
+		g(false, "a.?.c", "a.bb.c", '.'),
+		g(false, "*", "a.b.c", '.'),
+		g(true, "*test", "this is a test"),
+		g(true, "this*", "this is a test"),
+		g(true, "*is *", "this is a test"),
+		g(true, "*is*a*", "this is a test"),
+		g(true, "**test**", "this is a test"),
+		g(true, "**is**a***test*", "this is a test"),
+		g(false, "*is", "this is a test"),
+		g(false, "*no*", "this is a test"),
+		g(true, "[!a]*", "this is a test3"),
+		g(true, "*abc", "abcabc"),
+		g(true, "**abc", "abcabc"),
+		g(true, "???", "abc"),
+		g(true, "?*?", "abc"),
+		g(true, "?*?", "ac"),
+		g(false, "sta", "stagnation"),
+		g(true, "sta*", "stagnation"),
+		g(false, "sta?", "stagnation"),
+		g(false, "sta?n", "stagnation"),
+		g(true, "{abc,def}ghi", "defghi"),
+		g(true, "{abc,abcd}a", "abcda"),
+		g(true, "{a,ab}{bc,f}", "abc"),
+		g(true, "{*,**}{a,b}", "ab"),
+		g(false, "{*,**}{a,b}", "ac"),
+		g(true, "/{rate,[a-z][a-z][a-z]}*", "/rate"),
+		g(true, "/{rate,[0-9][0-9][0-9]}*", "/rate"),
+		g(true, "/{rate,[a-z][a-z][a-z]}*", "/usd"),
+		g(true, "{*.google.*,*.yandex.*}", "www.google.com", '.'),
+		g(true, "{*.google.*,*.yandex.*}", "www.yandex.com", '.'),
+		g(false, "{*.google.*,*.yandex.*}", "yandex.com", '.'),
+		g(false, "{*.google.*,*.yandex.*}", "google.com", '.'),
+		g(true, "{*.google.*,yandex.*}", "www.google.com", '.'),
+		g(true, "{*.google.*,yandex.*}", "yandex.com", '.'),
+		g(false, "{*.google.*,yandex.*}", "www.yandex.com", '.'),
+		g(false, "{*.google.*,yandex.*}", "google.com", '.'),
+		g(true, "*//{,*.}example.com", "https://www.example.com"),
+		g(true, "*//{,*.}example.com", "http://example.com"),
+		g(false, "*//{,*.}example.com", "http://example.com.net"),
+		g(true, "{a*,b}c", "abc", '.'),
+		g(true, pattern_all, fixture_all_match),
+		g(false, pattern_all, fixture_all_mismatch),
+		g(true, pattern_plain, fixture_plain_match),
+		g(false, pattern_plain, fixture_plain_mismatch),
+		g(true, pattern_multiple, fixture_multiple_match),
+		g(false, pattern_multiple, fixture_multiple_mismatch),
+		g(true, pattern_alternatives, fixture_alternatives_match),
+		g(false, pattern_alternatives, fixture_alternatives_mismatch),
+		g(true, pattern_alternatives_suffix, fixture_alternatives_suffix_first_match),
+		g(false, pattern_alternatives_suffix, fixture_alternatives_suffix_first_mismatch),
+		g(true, pattern_alternatives_suffix, fixture_alternatives_suffix_second),
+		g(true, pattern_alternatives_combine_hard, fixture_alternatives_combine_hard),
+		g(true, pattern_alternatives_combine_lite, fixture_alternatives_combine_lite),
+		g(true, pattern_prefix, fixture_prefix_suffix_match),
+		g(false, pattern_prefix, fixture_prefix_suffix_mismatch),
+		g(true, pattern_suffix, fixture_prefix_suffix_match),
+		g(false, pattern_suffix, fixture_prefix_suffix_mismatch),
+		g(true, pattern_prefix_suffix, fixture_prefix_suffix_match),
+		g(false, pattern_prefix_suffix, fixture_prefix_suffix_mismatch),
 	} {
 		t.Run(strconv.Itoa(i), func(t *testing.T) {
-			_, err := Compile(test.pattern, test.delimiters...)
+			t.Logf("%q (%q) :: %q -> %t", test.s, string(test.sep), test.m, test.exp)
+			g, err := Compile(test.s, test.sep...)
+			if err != nil {
+				t.Fatalf("expected no error, got: %v", err)
+			}
+			if b := g.Match(test.m); b != test.exp {
+				t.Errorf("pattern %q matching %q should be %v but got %v\n%s", test.s, test.m, test.exp, b, g)
+			}
+		})
+	}
+}
+
+func TestCompileSeparators(t *testing.T) {
+	for i, test := range []globTest{
+		gc("{*,**,?}", '.'),
+		gc("{*.google.*,yandex.*}", '.'),
+	} {
+		t.Run(strconv.Itoa(i), func(t *testing.T) {
+			_, err := Compile(test.s, test.sep...)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -19,109 +115,8 @@ func TestCompile(t *testing.T) {
 	}
 }
 
-func TestGlob(t *testing.T) {
-	for i, test := range []test{
-		glob(true, "* ?at * eyes", "my cat has very bright eyes"),
-		glob(true, "", ""),
-		glob(false, "", "b"),
-		glob(true, "*ä", "åä"),
-		glob(true, "abc", "abc"),
-		glob(true, "a*c", "abc"),
-		glob(true, "a*c", "a12345c"),
-		glob(true, "a?c", "a1c"),
-		glob(true, "a.b", "a.b", '.'),
-		glob(true, "a.*", "a.b", '.'),
-		glob(true, "a.**", "a.b.c", '.'),
-		glob(true, "a.?.c", "a.b.c", '.'),
-		glob(true, "a.?.?", "a.b.c", '.'),
-		glob(true, "?at", "cat"),
-		glob(true, "?at", "fat"),
-		glob(true, "*", "abc"),
-		glob(true, `\*`, "*"),
-		glob(true, "**", "a.b.c", '.'),
-		glob(false, "?at", "at"),
-		glob(false, "?at", "fat", 'f'),
-		glob(false, "a.*", "a.b.c", '.'),
-		glob(false, "a.?.c", "a.bb.c", '.'),
-		glob(false, "*", "a.b.c", '.'),
-		glob(true, "*test", "this is a test"),
-		glob(true, "this*", "this is a test"),
-		glob(true, "*is *", "this is a test"),
-		glob(true, "*is*a*", "this is a test"),
-		glob(true, "**test**", "this is a test"),
-		glob(true, "**is**a***test*", "this is a test"),
-		glob(false, "*is", "this is a test"),
-		glob(false, "*no*", "this is a test"),
-		glob(true, "[!a]*", "this is a test3"),
-		glob(true, "*abc", "abcabc"),
-		glob(true, "**abc", "abcabc"),
-		glob(true, "???", "abc"),
-		glob(true, "?*?", "abc"),
-		glob(true, "?*?", "ac"),
-		glob(false, "sta", "stagnation"),
-		glob(true, "sta*", "stagnation"),
-		glob(false, "sta?", "stagnation"),
-		glob(false, "sta?n", "stagnation"),
-		glob(true, "{abc,def}ghi", "defghi"),
-		glob(true, "{abc,abcd}a", "abcda"),
-		glob(true, "{a,ab}{bc,f}", "abc"),
-		glob(true, "{*,**}{a,b}", "ab"),
-		glob(false, "{*,**}{a,b}", "ac"),
-		glob(true, "/{rate,[a-z][a-z][a-z]}*", "/rate"),
-		glob(true, "/{rate,[0-9][0-9][0-9]}*", "/rate"),
-		glob(true, "/{rate,[a-z][a-z][a-z]}*", "/usd"),
-		glob(true, "{*.google.*,*.yandex.*}", "www.google.com", '.'),
-		glob(true, "{*.google.*,*.yandex.*}", "www.yandex.com", '.'),
-		glob(false, "{*.google.*,*.yandex.*}", "yandex.com", '.'),
-		glob(false, "{*.google.*,*.yandex.*}", "google.com", '.'),
-		glob(true, "{*.google.*,yandex.*}", "www.google.com", '.'),
-		glob(true, "{*.google.*,yandex.*}", "yandex.com", '.'),
-		glob(false, "{*.google.*,yandex.*}", "www.yandex.com", '.'),
-		glob(false, "{*.google.*,yandex.*}", "google.com", '.'),
-		glob(true, "*//{,*.}example.com", "https://www.example.com"),
-		glob(true, "*//{,*.}example.com", "http://example.com"),
-		glob(false, "*//{,*.}example.com", "http://example.com.net"),
-		glob(true, "{a*,b}c", "abc", '.'),
-		glob(true, pattern_all, fixture_all_match),
-		glob(false, pattern_all, fixture_all_mismatch),
-		glob(true, pattern_plain, fixture_plain_match),
-		glob(false, pattern_plain, fixture_plain_mismatch),
-		glob(true, pattern_multiple, fixture_multiple_match),
-		glob(false, pattern_multiple, fixture_multiple_mismatch),
-		glob(true, pattern_alternatives, fixture_alternatives_match),
-		glob(false, pattern_alternatives, fixture_alternatives_mismatch),
-		glob(true, pattern_alternatives_suffix, fixture_alternatives_suffix_first_match),
-		glob(false, pattern_alternatives_suffix, fixture_alternatives_suffix_first_mismatch),
-		glob(true, pattern_alternatives_suffix, fixture_alternatives_suffix_second),
-		glob(true, pattern_alternatives_combine_hard, fixture_alternatives_combine_hard),
-		glob(true, pattern_alternatives_combine_lite, fixture_alternatives_combine_lite),
-		glob(true, pattern_prefix, fixture_prefix_suffix_match),
-		glob(false, pattern_prefix, fixture_prefix_suffix_mismatch),
-		glob(true, pattern_suffix, fixture_prefix_suffix_match),
-		glob(false, pattern_suffix, fixture_prefix_suffix_mismatch),
-		glob(true, pattern_prefix_suffix, fixture_prefix_suffix_match),
-		glob(false, pattern_prefix_suffix, fixture_prefix_suffix_mismatch),
-	} {
-		t.Run(strconv.Itoa(i), func(t *testing.T) {
-			defer func() {
-				if thePanic := recover(); thePanic != nil {
-					t.Fatalf("panic recovered: %v", thePanic)
-				}
-			}()
-			g := MustCompile(test.pattern, test.delimiters...)
-			result := g.Match(test.match)
-			if result != test.should {
-				t.Errorf(
-					"pattern %q matching %q should be %v but got %v\n%s",
-					test.pattern, test.match, test.should, result, g,
-				)
-			}
-		})
-	}
-}
-
-func TestQuoteMeta(t *testing.T) {
-	for id, test := range []struct {
+func TestQuote(t *testing.T) {
+	for i, test := range []struct {
 		s, exp string
 	}{
 		{`[foo*]`, `\[foo\*\]`},
@@ -129,14 +124,37 @@ func TestQuoteMeta(t *testing.T) {
 		{`*?\[]{}`, `\*\?\\\[\]\{\}`},
 		{`some text and *?\[]{}`, `some text and \*\?\\\[\]\{\}`},
 	} {
-		act := QuoteMeta(test.s)
-		if act != test.exp {
-			t.Errorf("#%d QuoteMeta(%q) = %q; want %q", id, test.s, act, test.exp)
-		}
-		if _, err := Compile(act); err != nil {
-			t.Errorf("#%d _, err := Compile(QuoteMeta(%q) = %q); err = %q", id, test.s, act, err)
-		}
+		t.Run(strconv.Itoa(i), func(t *testing.T) {
+			t.Logf("%q -> %q", test.s, test.exp)
+			s := Quote(test.s)
+			if s != test.exp {
+				t.Errorf("QuoteMeta(%q) = %q; want %q", test.s, s, test.exp)
+			}
+			if _, err := Compile(s); err != nil {
+				t.Errorf("_, err := Compile(QuoteMeta(%q) = %q); err = %q", test.s, s, err)
+			}
+		})
 	}
+}
+
+type globTest struct {
+	s   string
+	m   string
+	exp bool
+	sep []rune
+}
+
+func g(exp bool, s, m string, sep ...rune) globTest {
+	return globTest{
+		s:   s,
+		m:   m,
+		exp: exp,
+		sep: sep,
+	}
+}
+
+func gc(s string, del ...rune) globTest {
+	return globTest{s: s, sep: del}
 }
 
 const (
@@ -176,22 +194,3 @@ const (
 	regexp_alternatives_combine_hard           = `^(abc.*[a-c]def|abc.[d-g]def|abc[zte].def)$`
 	fixture_alternatives_combine_hard          = "abczqdef"
 )
-
-type test struct {
-	pattern, match string
-	should         bool
-	delimiters     []rune
-}
-
-func glob(s bool, p, m string, d ...rune) test {
-	return test{
-		should:     s,
-		pattern:    p,
-		match:      m,
-		delimiters: d,
-	}
-}
-
-func globc(p string, d ...rune) test {
-	return test{pattern: p, delimiters: d}
-}
