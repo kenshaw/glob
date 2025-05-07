@@ -10,11 +10,36 @@ import (
 // Glob matches glob patterns.
 type Glob struct {
 	syntax.Matcher
+	pattern string
+}
+
+// New creates a new, empty glob.
+func New() *Glob {
+	return &Glob{}
 }
 
 // String satisfies the [fmt.Stringer] interface.
 func (g *Glob) String() string {
 	return fmt.Sprintf("%v", g.Matcher)
+}
+
+// UnmarshalText satisfies the [encoding.TextUnarshaler]
+func (g *Glob) UnmarshalText(buf []byte) error {
+	tree, err := syntax.Parse(syntax.NewLexer(string(buf)))
+	if err != nil {
+		return err
+	}
+	m, err := tree.Match(nil)
+	if err != nil {
+		return err
+	}
+	g.Matcher, g.pattern = m, string(buf)
+	return nil
+}
+
+// MarshalText
+func (g *Glob) MarshalText() ([]byte, error) {
+	return []byte(g.pattern), nil
 }
 
 // Compile creates Glob for given pattern and strings (if any present after
@@ -51,7 +76,7 @@ func Compile(pattern string, separators ...rune) (*Glob, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Glob{m}, nil
+	return &Glob{Matcher: m, pattern: pattern}, nil
 }
 
 // Must is the same as Compile, except that if Compile returns error, this will

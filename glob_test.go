@@ -90,12 +90,22 @@ func TestCompile(t *testing.T) {
 	} {
 		t.Run(strconv.Itoa(i), func(t *testing.T) {
 			t.Logf("%q (%q) :: %q -> %t", test.s, string(test.sep), test.m, test.exp)
-			g, err := Compile(test.s, test.sep...)
+			g1, err := Compile(test.s, test.sep...)
 			if err != nil {
 				t.Fatalf("expected no error, got: %v", err)
 			}
-			if b := g.Match(test.m); b != test.exp {
-				t.Errorf("pattern %q matching %q should be %v but got %v\n%s", test.s, test.m, test.exp, b, g)
+			if b := g1.Match(test.m); b != test.exp {
+				t.Errorf("expected %t, got: %t", test.exp, b)
+			}
+			if test.sep != nil {
+				return
+			}
+			g2 := New()
+			if err := g2.UnmarshalText([]byte(test.s)); err != nil {
+				t.Fatalf("expected no error, got: %v", err)
+			}
+			if b := g2.Match(test.m); b != test.exp {
+				t.Errorf("expected %t, got: %t", test.exp, b)
 			}
 		})
 	}
