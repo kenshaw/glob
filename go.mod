@@ -1,3 +1,3 @@
 module github.com/kenshaw/glob
 
-go 1.24.2
+go 1.25
