@@ -348,7 +348,7 @@ func TestCompile(t *testing.T) {
 		{fixture_prefix_suffix_mismatch, pattern_prefix_suffix, 0, false},
 	} {
 		t.Run(strconv.Itoa(i), func(t *testing.T) {
-			t.Logf("%q (%q) :: %q -> %t", test.v, string(test.sep), test.s, test.exp)
+			t.Logf("%q :: %q (sep: %q) match: %t", test.s, test.v, string(test.sep), test.exp)
 			var sep []rune
 			if test.sep != 0 {
 				sep = append(sep, test.sep)
