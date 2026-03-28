@@ -13,34 +13,10 @@ type Glob struct {
 
 // New creates a new, empty glob.
 func New() *Glob {
-	return &Glob{}
+	return new(Glob)
 }
 
-// String satisfies the [fmt.Stringer] interface.
-func (g *Glob) String() string {
-	return g.pattern
-}
-
-// UnmarshalText satisfies the [encoding.TextUnarshaler]
-func (g *Glob) UnmarshalText(buf []byte) error {
-	tree, err := syntax.Parse(syntax.NewLexer(string(buf)))
-	if err != nil {
-		return err
-	}
-	m, err := tree.Match(nil)
-	if err != nil {
-		return err
-	}
-	g.Matcher, g.pattern = m, string(buf)
-	return nil
-}
-
-// MarshalText
-func (g *Glob) MarshalText() ([]byte, error) {
-	return []byte(g.pattern), nil
-}
-
-// Compile creates Glob for given pattern and strings (if any present after
+// Compile creates a [Glob] for given pattern and strings (if any present after
 // pattern) as separators. The pattern syntax is:
 //
 //	pattern:
@@ -75,6 +51,30 @@ func Compile(pattern string, separators ...rune) (*Glob, error) {
 		return nil, err
 	}
 	return &Glob{Matcher: m, pattern: pattern}, nil
+}
+
+// UnmarshalText satisfies the [encoding.TextUnarshaler] interface.
+func (g *Glob) UnmarshalText(buf []byte) error {
+	tree, err := syntax.Parse(syntax.NewLexer(string(buf)))
+	if err != nil {
+		return err
+	}
+	m, err := tree.Match(nil)
+	if err != nil {
+		return err
+	}
+	g.Matcher, g.pattern = m, string(buf)
+	return nil
+}
+
+// MarshalText satisfies the [encoding.TextMarhsaler] interface.
+func (g *Glob) MarshalText() ([]byte, error) {
+	return []byte(g.pattern), nil
+}
+
+// String satisfies the [fmt.Stringer] interface.
+func (g *Glob) String() string {
+	return g.pattern
 }
 
 // Must is the same as Compile, except that if Compile returns error, this will

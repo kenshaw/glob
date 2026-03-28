@@ -6,105 +6,368 @@ import (
 )
 
 func TestCompile(t *testing.T) {
-	for i, test := range []globTest{
-		g(true, "* ?at * eyes", "my cat has very bright eyes"),
-		g(true, "", ""),
-		g(false, "", "b"),
-		g(true, "*ä", "åä"),
-		g(true, "abc", "abc"),
-		g(true, "a*c", "abc"),
-		g(true, "a*c", "a12345c"),
-		g(true, "a?c", "a1c"),
-		g(true, "a.b", "a.b", '.'),
-		g(true, "a.*", "a.b", '.'),
-		g(true, "a.**", "a.b.c", '.'),
-		g(true, "a.?.c", "a.b.c", '.'),
-		g(true, "a.?.?", "a.b.c", '.'),
-		g(true, "?at", "cat"),
-		g(true, "?at", "fat"),
-		g(true, "*", "abc"),
-		g(true, `\*`, "*"),
-		g(true, "**", "a.b.c", '.'),
-		g(false, "?at", "at"),
-		g(false, "?at", "fat", 'f'),
-		g(false, "a.*", "a.b.c", '.'),
-		g(false, "a.?.c", "a.bb.c", '.'),
-		g(false, "*", "a.b.c", '.'),
-		g(true, "*test", "this is a test"),
-		g(true, "this*", "this is a test"),
-		g(true, "*is *", "this is a test"),
-		g(true, "*is*a*", "this is a test"),
-		g(true, "**test**", "this is a test"),
-		g(true, "**is**a***test*", "this is a test"),
-		g(false, "*is", "this is a test"),
-		g(false, "*no*", "this is a test"),
-		g(true, "[!a]*", "this is a test3"),
-		g(true, "*abc", "abcabc"),
-		g(true, "**abc", "abcabc"),
-		g(true, "???", "abc"),
-		g(true, "?*?", "abc"),
-		g(true, "?*?", "ac"),
-		g(false, "sta", "stagnation"),
-		g(true, "sta*", "stagnation"),
-		g(false, "sta?", "stagnation"),
-		g(false, "sta?n", "stagnation"),
-		g(true, "{abc,def}ghi", "defghi"),
-		g(true, "{abc,abcd}a", "abcda"),
-		g(true, "{a,ab}{bc,f}", "abc"),
-		g(true, "{*,**}{a,b}", "ab"),
-		g(false, "{*,**}{a,b}", "ac"),
-		g(true, "/{rate,[a-z][a-z][a-z]}*", "/rate"),
-		g(true, "/{rate,[0-9][0-9][0-9]}*", "/rate"),
-		g(true, "/{rate,[a-z][a-z][a-z]}*", "/usd"),
-		g(true, "{*.google.*,*.yandex.*}", "www.google.com", '.'),
-		g(true, "{*.google.*,*.yandex.*}", "www.yandex.com", '.'),
-		g(false, "{*.google.*,*.yandex.*}", "yandex.com", '.'),
-		g(false, "{*.google.*,*.yandex.*}", "google.com", '.'),
-		g(true, "{*.google.*,yandex.*}", "www.google.com", '.'),
-		g(true, "{*.google.*,yandex.*}", "yandex.com", '.'),
-		g(false, "{*.google.*,yandex.*}", "www.yandex.com", '.'),
-		g(false, "{*.google.*,yandex.*}", "google.com", '.'),
-		g(true, "*//{,*.}example.com", "https://www.example.com"),
-		g(true, "*//{,*.}example.com", "http://example.com"),
-		g(false, "*//{,*.}example.com", "http://example.com.net"),
-		g(true, "{a*,b}c", "abc", '.'),
-		g(true, pattern_all, fixture_all_match),
-		g(false, pattern_all, fixture_all_mismatch),
-		g(true, pattern_plain, fixture_plain_match),
-		g(false, pattern_plain, fixture_plain_mismatch),
-		g(true, pattern_multiple, fixture_multiple_match),
-		g(false, pattern_multiple, fixture_multiple_mismatch),
-		g(true, pattern_alternatives, fixture_alternatives_match),
-		g(false, pattern_alternatives, fixture_alternatives_mismatch),
-		g(true, pattern_alternatives_suffix, fixture_alternatives_suffix_first_match),
-		g(false, pattern_alternatives_suffix, fixture_alternatives_suffix_first_mismatch),
-		g(true, pattern_alternatives_suffix, fixture_alternatives_suffix_second),
-		g(true, pattern_alternatives_combine_hard, fixture_alternatives_combine_hard),
-		g(true, pattern_alternatives_combine_lite, fixture_alternatives_combine_lite),
-		g(true, pattern_prefix, fixture_prefix_suffix_match),
-		g(false, pattern_prefix, fixture_prefix_suffix_mismatch),
-		g(true, pattern_suffix, fixture_prefix_suffix_match),
-		g(false, pattern_suffix, fixture_prefix_suffix_mismatch),
-		g(true, pattern_prefix_suffix, fixture_prefix_suffix_match),
-		g(false, pattern_prefix_suffix, fixture_prefix_suffix_mismatch),
+	for i, test := range []struct {
+		v   string
+		s   string
+		sep rune
+		exp bool
+	}{
+		{
+			``,
+			``,
+			0, true,
+		},
+		{
+			``,
+			`b`,
+			0, false,
+		},
+		{
+			`*ä`,
+			`åä`,
+			0, true,
+		},
+		{
+			`abc`,
+			`abc`,
+			0, true,
+		},
+		{
+			`a*c`,
+			`abc`,
+			0, true,
+		},
+		{
+			`a*c`,
+			`a12345c`,
+			0, true,
+		},
+		{
+			`a?c`,
+			`a1c`,
+			0, true,
+		},
+		{
+			`a.b`,
+			`a.b`,
+			'.', true,
+		},
+		{
+			`a.*`,
+			`a.b`,
+			'.', true,
+		},
+		{
+			`a.**`,
+			`a.b.c`,
+			'.', true,
+		},
+		{
+			`a.?.c`,
+			`a.b.c`,
+			'.', true,
+		},
+		{
+			`a.?.?`,
+			`a.b.c`,
+			'.', true,
+		},
+		{
+			`?at`,
+			`cat`,
+			0, true,
+		},
+		{
+			`?at`,
+			`fat`,
+			0, true,
+		},
+		{
+			`*`,
+			`abc`,
+			0, true,
+		},
+		{
+			`\*`,
+			`*`,
+			0, true,
+		},
+		{
+			`**`,
+			`a.b.c`,
+			'.', true,
+		},
+		{
+			`?at`,
+			`at`,
+			0, false,
+		},
+		{
+			`?at`,
+			`fat`,
+			'f', false,
+		},
+		{
+			`a.*`,
+			`a.b.c`,
+			'.', false,
+		},
+		{
+			`a.?.c`,
+			`a.bb.c`,
+			'.', false,
+		},
+		{
+			`*`,
+			`a.b.c`,
+			'.', false,
+		},
+		{
+			`*test`,
+			`this is a test`,
+			0, true,
+		},
+		{
+			`this*`,
+			`this is a test`,
+			0, true,
+		},
+		{
+			`*is *`,
+			`this is a test`,
+			0, true,
+		},
+		{
+			`*is*a*`,
+			`this is a test`,
+			0, true,
+		},
+		{
+			`**test**`,
+			`this is a test`,
+			0, true,
+		},
+		{
+			`**is**a***test*`,
+			`this is a test`,
+			0, true,
+		},
+		{
+			`*is`,
+			`this is a test`,
+			0, false,
+		},
+		{
+			`*no*`,
+			`this is a test`,
+			0, false,
+		},
+		{
+			`[!a]*`,
+			`this is a test3`,
+			0, true,
+		},
+		{
+			`[!t]*`,
+			`this is a test3`,
+			0, false,
+		},
+		{
+			`*abc`,
+			`abcabc`,
+			0, true,
+		},
+		{
+			`**abc`,
+			`abcabc`,
+			0, true,
+		},
+		{
+			`???`,
+			`abc`,
+			0, true,
+		},
+		{
+			`?*?`,
+			`abc`,
+			0, true,
+		},
+		{
+			`?*?`,
+			`ac`,
+			0, true,
+		},
+		{
+			`sta`,
+			`stagnation`,
+			0, false,
+		},
+		{
+			`sta*`,
+			`stagnation`,
+			0, true,
+		},
+		{
+			`STA*`,
+			`stagnation`,
+			0, false,
+		},
+		{
+			`sta?`,
+			`stagnation`,
+			0, false,
+		},
+		{
+			`sta?n`,
+			`stagnation`,
+			0, false,
+		},
+		{
+			`* ?at * eyes`,
+			`my cat has very bright eyes`,
+			0, true,
+		},
+		{
+			`{abc,def}ghi`,
+			`defghi`,
+			0, true,
+		},
+		{
+			`{abc,abcd}a`,
+			`abcda`,
+			0, true,
+		},
+		{
+			`{a,ab}{bc,f}`,
+			`abc`,
+			0, true,
+		},
+		{
+			`{*,**}{a,b}`,
+			`ab`,
+			0, true,
+		},
+		{
+			`{*,**}{a,b}`,
+			`ac`,
+			0, false,
+		},
+		{
+			`/{rate,[a-z][a-z][a-z]}*`,
+			`/rate`,
+			0, true,
+		},
+		{
+			`/{rate,[0-9][0-9][0-9]}*`,
+			`/rate`,
+			0, true,
+		},
+		{
+			`/{rate,[a-z][a-z][a-z]}*`,
+			`/usd`,
+			0, true,
+		},
+		{
+			`{*.google.*,*.yandex.*}`,
+			`www.google.com`,
+			'.', true,
+		},
+		{
+			`{*.google.*,*.yandex.*}`,
+			`www.yandex.com`,
+			'.', true,
+		},
+		{
+			`{*.google.*,*.yandex.*}`,
+			`yandex.com`,
+			'.', false,
+		},
+		{
+			`{*.google.*,*.yandex.*}`,
+			`google.com`,
+			'.', false,
+		},
+		{
+			`{*.google.*,yandex.*}`,
+			`www.google.com`,
+			'.', true,
+		},
+		{
+			`{*.google.*,yandex.*}`,
+			`yandex.com`,
+			'.', true,
+		},
+		{
+			`{*.google.*,yandex.*}`,
+			`www.yandex.com`,
+			'.', false,
+		},
+		{
+			`{*.google.*,yandex.*}`,
+			`google.com`,
+			'.', false,
+		},
+		{
+			`*//{,*.}example.com`,
+			`https://www.example.com`,
+			0, true,
+		},
+		{
+			`*//{,*.}example.com`,
+			`http://example.com`,
+			0, true,
+		},
+		{
+			`*//{,*.}example.com`,
+			`http://example.com.net`,
+			0, false,
+		},
+		{
+			`{a*,b}c`,
+			`abc`,
+			'.', true,
+		},
+		{pattern_all, fixture_all_match, 0, true},
+		{pattern_all, fixture_all_mismatch, 0, false},
+		{pattern_plain, fixture_plain_match, 0, true},
+		{pattern_plain, fixture_plain_mismatch, 0, false},
+		{pattern_multiple, fixture_multiple_match, 0, true},
+		{pattern_multiple, fixture_multiple_mismatch, 0, false},
+		{pattern_alternatives, fixture_alternatives_match, 0, true},
+		{pattern_alternatives, fixture_alternatives_mismatch, 0, false},
+		{pattern_alternatives_suffix, fixture_alternatives_suffix_first_match, 0, true},
+		{pattern_alternatives_suffix, fixture_alternatives_suffix_first_mismatch, 0, false},
+		{pattern_alternatives_suffix, fixture_alternatives_suffix_second, 0, true},
+		{pattern_alternatives_combine_hard, fixture_alternatives_combine_hard, 0, true},
+		{pattern_alternatives_combine_lite, fixture_alternatives_combine_lite, 0, true},
+		{pattern_prefix, fixture_prefix_suffix_match, 0, true},
+		{pattern_prefix, fixture_prefix_suffix_mismatch, 0, false},
+		{pattern_suffix, fixture_prefix_suffix_match, 0, true},
+		{pattern_suffix, fixture_prefix_suffix_mismatch, 0, false},
+		{pattern_prefix_suffix, fixture_prefix_suffix_match, 0, true},
+		{pattern_prefix_suffix, fixture_prefix_suffix_mismatch, 0, false},
 	} {
 		t.Run(strconv.Itoa(i), func(t *testing.T) {
-			t.Logf("%q (%q) :: %q -> %t", test.s, string(test.sep), test.m, test.exp)
-			g1, err := Compile(test.s, test.sep...)
+			t.Logf("%q (%q) :: %q -> %t", test.v, string(test.sep), test.s, test.exp)
+			var sep []rune
+			if test.sep != 0 {
+				sep = append(sep, test.sep)
+			}
+			g1, err := Compile(test.v, sep...)
 			if err != nil {
 				t.Fatalf("expected no error, got: %v", err)
 			}
-			if b := g1.Match(test.m); b != test.exp {
+			if b := g1.Match(test.s); b != test.exp {
 				t.Errorf("expected %t, got: %t", test.exp, b)
 			}
-			if test.sep != nil {
+			if test.sep != 0 {
 				return
 			}
 			g2 := New()
-			if err := g2.UnmarshalText([]byte(test.s)); err != nil {
+			if err := g2.UnmarshalText([]byte(test.v)); err != nil {
 				t.Fatalf("expected no error, got: %v", err)
 			}
-			if b := g2.Match(test.m); b != test.exp {
+			if b := g2.Match(test.s); b != test.exp {
 				t.Errorf("expected %t, got: %t", test.exp, b)
 			}
 		})
@@ -112,13 +375,15 @@ func TestCompile(t *testing.T) {
 }
 
 func TestCompileSeparators(t *testing.T) {
-	for i, test := range []globTest{
-		gc("{*,**,?}", '.'),
-		gc("{*.google.*,yandex.*}", '.'),
+	for i, test := range []struct {
+		s   string
+		sep rune
+	}{
+		{"{*,**,?}", '.'},
+		{"{*.google.*,yandex.*}", '.'},
 	} {
 		t.Run(strconv.Itoa(i), func(t *testing.T) {
-			_, err := Compile(test.s, test.sep...)
-			if err != nil {
+			if _, err := Compile(test.s, test.sep); err != nil {
 				t.Fatal(err)
 			}
 		})
@@ -145,26 +410,6 @@ func TestQuote(t *testing.T) {
 			}
 		})
 	}
-}
-
-type globTest struct {
-	s   string
-	m   string
-	exp bool
-	sep []rune
-}
-
-func g(exp bool, s, m string, sep ...rune) globTest {
-	return globTest{
-		s:   s,
-		m:   m,
-		exp: exp,
-		sep: sep,
-	}
-}
-
-func gc(s string, del ...rune) globTest {
-	return globTest{s: s, sep: del}
 }
 
 const (
