@@ -90,7 +90,7 @@ linters:
         - G103
   exclusions:
     rules:
-      # The code that came from upstream, until docs/BACKLOG.md item 8.
+      # The code that came from upstream, until docs/BACKLOG.md item 12.
       - path: (syntax/(match|matcher|node|syntax|runes|debug_disabled|debug_enabled)\.go|syntax/[a-z]+_test\.go|cmd/|bench_test\.go|glob_test\.go|example_test\.go)
         linters:
           - errcheck

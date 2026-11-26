@@ -70,7 +70,7 @@ func readVectors(t *testing.T) []vector {
 }
 
 // TestVectors holds D19. It runs each vector of the survey with the optimized
-// matchers and with the backtracking matcher (D12).
+// matchers and with the NFA matcher (D12).
 func TestVectors(t *testing.T) {
 	t.Parallel()
 	var ran int
@@ -102,16 +102,13 @@ func TestVectors(t *testing.T) {
 		if got := g.Match(v.s); got != exp {
 			t.Errorf("vectors.tsv:%d: %s: %q, %q, separators %q: expected %t, got: %t (%s)", v.line, v.feature, v.pattern, v.s, v.sep, exp, got, v.source)
 		}
-		if v.feature == "opt-globstar" || v.feature == "opt-nocase" {
-			continue
-		}
-		ref, ok := backtrack(t, v.pattern, sep)
+		ref, ok := reference(t, v.pattern, opts...)
 		if !ok {
 			t.Errorf("vectors.tsv:%d: Parse(%q) failed and Compile did not", v.line, v.pattern)
 			continue
 		}
 		if got := ref.Match(v.s); got != exp {
-			t.Errorf("vectors.tsv:%d: %s: backtracking: %q, %q, separators %q: expected %t, got: %t (%s)", v.line, v.feature, v.pattern, v.s, v.sep, exp, got, v.source)
+			t.Errorf("vectors.tsv:%d: %s: nfa: %q, %q, separators %q: expected %t, got: %t (%s)", v.line, v.feature, v.pattern, v.s, v.sep, exp, got, v.source)
 		}
 	}
 	if ran < 2000 {

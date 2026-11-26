@@ -91,6 +91,64 @@ var classes = map[string]func(rune) bool{
 	"xdigit": isXdigit,
 }
 
+// classASCII holds the ASCII runes of each named class, one bit each.
+var classASCII = func() map[string][2]uint64 {
+	m := make(map[string][2]uint64, len(classes))
+	for name, f := range classes {
+		var t [2]uint64
+		for r := range rune(utf8.RuneSelf) {
+			if f(r) {
+				t[r>>6] |= 1 << (r & 63)
+			}
+		}
+		m[name] = t
+	}
+	return m
+}()
+
+// ASCII returns the answer of Contains for each ASCII rune, one bit each. It
+// takes time linear in the size of the class, and does not test each rune.
+func (d ClassData) ASCII() [2]uint64 {
+	var t [2]uint64
+	set := func(r rune) { t[r>>6] |= 1 << (r & 63) }
+	has := func(r rune) bool { return t[r>>6]&(1<<(r&63)) != 0 }
+	for _, r := range d.Chars {
+		if r < utf8.RuneSelf {
+			set(r)
+		}
+	}
+	for _, rng := range d.Ranges {
+		for r := max(rng.Lo, 0); r <= min(rng.Hi, utf8.RuneSelf-1); r++ {
+			set(r)
+		}
+	}
+	for _, name := range d.Classes {
+		c := classASCII[name]
+		t[0] |= c[0]
+		t[1] |= c[1]
+	}
+	if d.Fold {
+		for r := rune('a'); r <= 'z'; r++ {
+			if has(r) || has(r-'a'+'A') {
+				set(r)
+				set(r - 'a' + 'A')
+			}
+		}
+		// The orbits of k and s hold runes that are not ASCII: the Kelvin
+		// sign and the long s.
+		for _, r := range []rune{'k', 's'} {
+			if d.contains(unicode.SimpleFold(r)) {
+				set(r)
+				set(r - 'a' + 'A')
+			}
+		}
+	}
+	if d.Not {
+		t[0], t[1] = ^t[0], ^t[1]
+	}
+	return t
+}
+
 // isClassName reports whether name is a named class.
 func isClassName(name string) bool {
 	_, ok := classes[name]
@@ -153,7 +211,7 @@ func (ClassMatcher) Size() int {
 func (m ClassMatcher) Index(s string) (int, []int) {
 	for i, r := range s {
 		if m.data.Contains(r) {
-			return i, segmentsByRuneLength[utf8.RuneLen(r)]
+			return i, segmentsByRuneLength[runeWidth(s, i)]
 		}
 	}
 	return -1, nil
@@ -269,19 +327,42 @@ func abs(n int) int {
 	return n
 }
 
-// FoldRune returns the smallest rune of the case folding orbit of r. Two runes
-// fold to the same rune when [strings.EqualFold] treats them as equal.
+// FoldRune returns the smallest lower case rune of the case folding orbit of
+// r, or the smallest rune of the orbit when it holds no lower case rune. Two
+// runes fold to the same rune when [strings.EqualFold] treats them as equal.
+// A lower case ASCII letter folds to itself (D17).
 func FoldRune(r rune) rune {
-	m := r
-	for c := unicode.SimpleFold(r); c != r; c = unicode.SimpleFold(c) {
-		m = min(m, c)
+	if r < utf8.RuneSelf {
+		if 'A' <= r && r <= 'Z' {
+			r += 'a' - 'A'
+		}
+		return r
 	}
-	return m
+	least, lower := r, rune(-1)
+	if unicode.IsLower(r) {
+		lower = r
+	}
+	for c := unicode.SimpleFold(r); c != r; c = unicode.SimpleFold(c) {
+		least = min(least, c)
+		if unicode.IsLower(c) && (lower == -1 || c < lower) {
+			lower = c
+		}
+	}
+	if lower != -1 {
+		return lower
+	}
+	return least
 }
 
-// FoldString maps each rune of s with [FoldRune].
+// FoldString maps each rune of s with [FoldRune]. It returns s, and does not
+// allocate, when s is folded already, as lower case ASCII text is.
 func FoldString(s string) string {
-	return strings.Map(FoldRune, s)
+	for i := range len(s) {
+		if c := s[i]; c >= utf8.RuneSelf || 'A' <= c && c <= 'Z' {
+			return strings.Map(FoldRune, s)
+		}
+	}
+	return s
 }
 
 // Fold returns a copy of the tree for matching without regard to case. A

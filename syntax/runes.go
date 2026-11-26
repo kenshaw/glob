@@ -22,22 +22,13 @@ func runesHead(s string, r int) string {
 	return s[:i]
 }
 
+// runesTail returns the last r runes of s. An invalid byte is one rune, as a
+// range loop over s counts it.
 func runesTail(s string, r int) string {
-	var i, n int
-	for i = len(s); i >= 0; {
-		var ok bool
-		for j := 1; j <= 4 && i-j >= 0; j++ {
-			v, _ := utf8.DecodeRuneInString(s[i-j:])
-			if v != utf8.RuneError {
-				i -= j
-				n++
-				ok = true
-				break
-			}
-		}
-		if !ok || n == r {
-			return s[i:]
-		}
+	i := len(s)
+	for n := 0; n < r && i > 0; n++ {
+		_, w := utf8.DecodeLastRuneInString(s[:i])
+		i -= w
 	}
 	return s[i:]
 }
@@ -53,36 +44,28 @@ func runesExactlyRunesCount(s string, n int) bool {
 	return m == n
 }
 
+// runesIndexAnyRune returns the index of the first rune of s that is in rs,
+// or -1.
 func runesIndexAnyRune(s string, rs []rune) int {
-	for _, r := range rs {
-		if i := strings.IndexRune(s, r); i != -1 {
-			return i
-		}
+	switch len(rs) {
+	case 0:
+		return -1
+	case 1:
+		return strings.IndexRune(s, rs[0])
 	}
-	return -1
+	return strings.IndexFunc(s, func(r rune) bool { return slices.Contains(rs, r) })
 }
 
+// runesLastIndexAnyRune returns the index of the last rune of s that is in
+// rs, or -1.
 func runesLastIndexAnyRune(s string, rs []rune) int {
-	for _, r := range rs {
-		i := -1
-		if 0 <= r && r < utf8.RuneSelf {
-			i = strings.LastIndexByte(s, byte(r))
-		} else {
-			sub := s
-			for len(sub) > 0 {
-				j := strings.IndexRune(s, r)
-				if j == -1 {
-					break
-				}
-				i = j
-				sub = sub[i+1:]
-			}
-		}
-		if i != -1 {
-			return i
-		}
+	switch {
+	case len(rs) == 0:
+		return -1
+	case len(rs) == 1 && 0 <= rs[0] && rs[0] < utf8.RuneSelf:
+		return strings.LastIndexByte(s, byte(rs[0]))
 	}
-	return -1
+	return strings.LastIndexFunc(s, func(r rune) bool { return slices.Contains(rs, r) })
 }
 
 func runesIndex(s, needle []rune) int {
@@ -199,4 +182,15 @@ func runesHasRunes(s string, n int) bool {
 		}
 	}
 	return false
+}
+
+// runeWidth returns the width in bytes of the rune at s[i:]. An invalid byte
+// has the width 1, as a range loop over s steps over it, and not the width of
+// [utf8.RuneError].
+func runeWidth(s string, i int) int {
+	if s[i] < utf8.RuneSelf {
+		return 1
+	}
+	_, w := utf8.DecodeRuneInString(s[i:])
+	return w
 }

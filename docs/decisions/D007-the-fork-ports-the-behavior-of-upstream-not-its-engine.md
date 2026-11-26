@@ -12,8 +12,8 @@ The reasons:
    of upstream applies to it as a patch.
 2. The tests of upstream, such as `issues_test.go`, name the behavior of each
    fix. The fork runs the same cases in `TestUpstreamIssues`.
-3. The fork has a second matcher, the backtracking matcher (D12), so each
-   change of the optimized matchers has a reference to agree with.
+3. The fork has a second matcher, the NFA matcher (D12, D20), so each change
+   of the optimized matchers has a reference to agree with.
 
 The ledger records each commit of upstream and what the fork did with it
 (D6).

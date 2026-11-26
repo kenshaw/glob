@@ -9,6 +9,11 @@ such as `[[:alpha:]]`, the extended groups of bash such as `@(a|b)` and
 regard to case and to give `**` the meaning of the globstar of a shell, and
 the types `Path` and `Host`. It depends on the standard library alone.
 
+A match takes time linear in the length of the input, so a glob is safe to
+match against input that you do not trust. A group of bash that repeats a
+pattern with no most length, such as `+(*a)`, can take quadratic time. A match
+of most patterns does not allocate.
+
 [![Unit Tests][glob-ci-status]][glob-ci]
 [![Go Reference][goref-glob-status]][goref-glob]
 [![Releases][release-status]][Releases]

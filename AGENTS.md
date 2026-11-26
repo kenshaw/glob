@@ -39,7 +39,7 @@ maintainer.
 | asking why something is the way it is | the index in `docs/decisions/README.md` |
 | changing the syntax of a pattern | `docs/SYNTAX.md`, then D8 to D11 and D16 |
 | changing the API in `glob.go` | D13 and D14, then Go conventions below |
-| changing a matcher or the optimizer | D12 and D18. Run `FuzzMatchersAgree` after the change |
+| changing a matcher or the optimizer | D12, D18 and D20. Run `FuzzMatchersAgree` and `FuzzCompile` after the change |
 | following upstream, or adding to the ledger | `docs/UPSTREAM.md`, D6 and D7 |
 | answering an issue of upstream | the tables in `docs/UPSTREAM.md`, then `TestUpstreamIssues` |
 | adding a test vector | D19, then `testdata/vectors.tsv` |
@@ -86,9 +86,11 @@ person of upstream, and name an issue by its number.
 | `syntax/node.go`, `syntax/syntax.go` | the tree, and its minimizer |
 | `syntax/class.go` | bracket expressions, named classes, brace sequences, case folding and globstar (D9, D11, D16, D17) |
 | `syntax/match.go`, `syntax/matcher.go` | the optimizer and the optimized matchers |
-| `syntax/backtrack.go` | the backtracking matcher, for extended groups and as the reference of the tests (D10, D12) |
+| `syntax/nfa.go` | the NFA matcher, for extended groups, for trees that are not linear, and as the reference of the tests (D10, D12, D20) |
+| `syntax/linear.go` | `Linear`, which reports whether a tree of optimized matchers takes linear time (D20) |
 | `glob_test.go`, `example_test.go`, `bench_test.go` | the tests, the examples and the benchmarks of the API |
-| `diff_test.go`, `vectors_test.go` | `FuzzMatchersAgree`, `FuzzQuote` and `TestVectors` (D12, D19) |
+| `api_test.go` | the tests of the API, `TestWorstCase`, `TestAllocs` and `TestConcurrent` (D20) |
+| `diff_test.go`, `vectors_test.go` | `FuzzMatchersAgree`, `FuzzCompile`, `FuzzQuote` and `TestVectors` (D12, D19, D20) |
 | `skills_test.go`, `docs_test.go`, `ledger_test.go`, `gomod_test.go` | the tests of the agent setup, the documents, the ledger and `go.mod`, in package `glob_test` |
 | `testdata/vectors.tsv` | the test vectors of the survey (D19) |
 | `testdata/fuzz/` | the inputs that the fuzz tests failed on once |
@@ -131,8 +133,10 @@ and keep the file, so that `go test` runs the input every time.
   start it with "failed to" or "error".
 - A matcher keeps no state between calls, and keeps no input after a call.
   Every matcher is safe for concurrent use. `MatchBytes` depends on this.
-- The optimized matchers and the backtracking matcher must agree on every
-  input (D12). A new optimization needs a fuzz run.
+- The optimized matchers and the NFA matcher must agree on every input (D12,
+  D20). A new optimization needs a fuzz run.
+- A match takes time linear in the length of the input, and does not allocate
+  (D20). `syntax.Linear` must know each new matcher.
 - A test that names an issue of upstream names it by its number, as in
   "issue 51 of upstream".
 - `go.mod` has no `require` line (D5).

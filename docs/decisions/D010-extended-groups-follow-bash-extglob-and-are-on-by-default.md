@@ -15,5 +15,5 @@ for them, and `notes.txt` of the maintainers names them.
    pattern of the group matches. This is what the group matches in one path
    segment of bash. `*`, `?` and `+` groups cross a separator only when a
    pattern of the group holds one.
-4. A pattern that holds a group gets the backtracking matcher (D12). The
+4. A pattern that holds a group gets the NFA matcher (D12, D20). The
    optimizer does not hold groups.

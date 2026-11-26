@@ -78,20 +78,21 @@ func (node *Node) Insert(children ...*Node) {
 	}
 }
 
-// Match builds the matcher for the node. A tree that holds an extended group
-// gets a [BacktrackMatcher], and every other tree gets the matchers that the
-// compiler optimizes. If the compiler cannot build a tree, the tree gets a
-// [BacktrackMatcher] too.
+// Match builds the matcher for the node. A tree gets the matchers that the
+// compiler optimizes when they take time linear in the length of the input
+// (see [Linear]). Every other tree gets an [NFAMatcher]: a tree that holds an
+// extended group, a tree that the compiler cannot build, and a tree whose
+// optimized matchers can take more than linear time (D20).
 func (node *Node) Match(sep []rune) (Matcher, error) {
 	if node.Contains(Ext) {
-		return NewBacktrack(node, sep), nil
+		return NewNFA(node, sep), nil
 	}
 	m, err := buildMatch(node, sep)
-	if err != nil {
+	if err != nil || !Linear(m) {
 		// The optimizer cannot build every tree, such as a group that holds
-		// only empty groups and stars. The backtracking matcher matches any
-		// tree that the parser builds.
-		return NewBacktrack(node, sep), nil //nolint:nilerr // the fallback answers the error
+		// only empty groups and stars. The NFA matcher matches any tree that
+		// the parser builds.
+		return NewNFA(node, sep), nil //nolint:nilerr // the fallback answers the error
 	}
 	return m, nil
 }
@@ -229,7 +230,7 @@ func buildMatch(node *Node, sep []rune) (m Matcher, err error) {
 	case Class:
 		m = NewClass(node.Value.(ClassData))
 	case Ext:
-		return nil, errors.New("could not compile tree: an extended group needs the backtracking matcher")
+		return nil, errors.New("could not compile tree: an extended group needs the NFA matcher")
 	default:
 		return nil, fmt.Errorf("could not compile tree: unknown node type %s (%d)", node.Type, int(node.Type))
 	}

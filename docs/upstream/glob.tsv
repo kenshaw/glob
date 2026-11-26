@@ -1,16 +1,16 @@
 upstream	date	status	glob	note
-c0ec127ffb9903620416663fd8d99f4f834fd492	2026-08-28	ported	staged	glob/v1: rewrite the matching engine. The fork keeps its engine (D7). It ports the behavior: an unclosed group, a trailing backslash and invalid UTF-8 are errors (D8), NUL is a character, and TestUpstreamIssues runs the cases of issues_test.go
+c0ec127ffb9903620416663fd8d99f4f834fd492	2026-08-28	ported	740d3fa	glob/v1: rewrite the matching engine. The fork keeps its engine (D7). It ports the behavior: an unclosed group, a trailing backslash and invalid UTF-8 are errors (D8), NUL is a character, and TestUpstreamIssues runs the cases of issues_test.go
 e9b2193e74ebd31d5f1cc6ea306a44e6a7995bc2	2026-08-28	not-applicable		ci: migrate to github actions. The fork has its own workflow
-a82038c982634d624c205e2802186ccae512d28b	2026-08-28	ported	staged	pattern: String() and Separators() impl. The fork had String, and adds Glob.Separators (D13)
+a82038c982634d624c205e2802186ccae512d28b	2026-08-28	ported	740d3fa	pattern: String() and Separators() impl. The fork had String, and adds Glob.Separators (D13)
 ae63730e9b5cc72a107d6fc7360048e418bf29c5	2026-08-28	not-applicable		shape matchers: switch from <> to () and quote literals. It changes the debug output of the new engine, which the fork does not hold
 12d7a23d117d4ea00b86706efedfa7a6a6e184d7	2026-08-28	not-applicable		globtest: print out matchers tree and pretty syntax errors. It changes cmd/globtest of the new engine. The cmd/globtest of the fork prints the matcher already
-dab909e9fbced7c3160dce78fb7410584134ade3	2026-08-28	ported	staged	all: split parse.go into parse.go/match.go, polish docs, fix U+FFFD. The fork accepts U+FFFD in a pattern and in a class, and a trailing backslash is an error (D8)
+dab909e9fbced7c3160dce78fb7410584134ade3	2026-08-28	ported	740d3fa	all: split parse.go into parse.go/match.go, polish docs, fix U+FFFD. The fork accepts U+FFFD in a pattern and in a class, and a trailing backslash is an error (D8)
 c45ce1c4ddf9dd736b8dfc5ed131968442171dc3	2026-08-28	not-applicable		remove parked files (but keep them in git history). The fork does not hold the files
-60a7c159a183a8b3239ce03c640cc9bda7376e8f	2026-08-28	ported	staged	readme: clarify `**` and escaping, make the regexp comparison exact. README.md says that `**` does not consume the separator next to it (D16)
-80c58b01f2b00664c92a1103bd9d9e328810d758	2026-08-28	ported	staged	bench.sh: fix the assignment and the benchstat args, ignore *.bench. The fork had the same fault in bench.sh, and .gitignore ignores *.bench
+60a7c159a183a8b3239ce03c640cc9bda7376e8f	2026-08-28	ported	740d3fa	readme: clarify `**` and escaping, make the regexp comparison exact. README.md says that `**` does not consume the separator next to it (D16)
+80c58b01f2b00664c92a1103bd9d9e328810d758	2026-08-28	ported	740d3fa	bench.sh: fix the assignment and the benchstat args, ignore *.bench. The fork had the same fault in bench.sh, and .gitignore ignores *.bench
 986c05fb7000e63414ddc61162d0067b7a1f5639	2026-08-28	not-applicable		.github: bump workflow versions to latest. The fork has its own workflow
 7112f00494625902fcdb8fcdcd6638e0584a3acc	2026-09-08	not-applicable		all: modernize source code; require go 1.24. The fork requires Go 1.25, and its code differs
 abc6998440b93cf27685568d646a83511fa9f392	2026-10-26	not-applicable		glob: document the QuoteMeta contract. The fork escapes the comma in Quote instead (D15)
-ed9fb18824097ebe384f596c01fdc45fc95bd9c8	2026-10-26	ported	staged	glob: pin that `**` does not consume the adjacent separator. TestCompile holds the same cases (D16)
+ed9fb18824097ebe384f596c01fdc45fc95bd9c8	2026-10-26	ported	740d3fa	glob: pin that `**` does not consume the adjacent separator. TestCompile holds the same cases (D16)
 013ba992edbcefedaabd68d39120a445f99ea651	2026-10-26	not-applicable		tail alternatives: match stateless tail alts with a plain loop. It changes the speed of the new engine, which the fork does not hold
-ff0540d668f8280e0be2afab426e9c9598c80aaf	2026-10-26	ported	staged	glob: introduce Compiler with added Globstar option. The fork adds the option WithGlobstar, with the same rewrite of **/ (D13, D16)
+ff0540d668f8280e0be2afab426e9c9598c80aaf	2026-10-26	ported	740d3fa	glob: introduce Compiler with added Globstar option. The fork adds the option WithGlobstar, with the same rewrite of **/ (D13, D16)

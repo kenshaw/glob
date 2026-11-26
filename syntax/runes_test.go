@@ -221,3 +221,30 @@ func BenchmarkNotEqualStrings(b *testing.B) {
 		}
 	}
 }
+
+// TestRunesIndexAnyRune holds the index of the first and of the last
+// separator when there are several separators, and separators that are not
+// ASCII.
+func TestRunesIndexAnyRune(t *testing.T) {
+	t.Parallel()
+	for _, test := range []struct {
+		s           string
+		rs          []rune
+		first, last int
+	}{
+		{"a/b.c", []rune{'.', '/'}, 1, 3},
+		{"a.b/c", []rune{'/', '.'}, 1, 3},
+		{"abc", []rune{'.', '/'}, -1, -1},
+		{"abc", nil, -1, -1},
+		{"xéaé.b", []rune{'é'}, 1, 4},
+		{"éé", []rune{'é'}, 0, 2},
+		{"aéb.c", []rune{'é', '.'}, 1, 4},
+	} {
+		if got := runesIndexAnyRune(test.s, test.rs); got != test.first {
+			t.Errorf("runesIndexAnyRune(%q, %q): expected %d, got: %d", test.s, string(test.rs), test.first, got)
+		}
+		if got := runesLastIndexAnyRune(test.s, test.rs); got != test.last {
+			t.Errorf("runesLastIndexAnyRune(%q, %q): expected %d, got: %d", test.s, string(test.rs), test.last, got)
+		}
+	}
+}

@@ -11,4 +11,4 @@ supports, and why it leaves the rest out.
 input, the separators and the expected result, with the source of each. Each
 vector holds for the fork, or it has the status `differs` and a note that
 says why. `TestVectors` runs every vector with the optimized matchers and with
-the backtracking matcher (D12).
+the NFA matcher (D12, D20).

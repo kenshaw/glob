@@ -106,6 +106,21 @@ holds the cases of the issues.
 | issue 78, pull requests 79 and 80 | `Quote` did not escape the comma | `Quote` escapes it (D15) |
 | pull request 84 | a `}` outside a group is a character | kept as a character, as upstream keeps it (D8) |
 
+### Faults that no issue of upstream names
+
+The fork found these faults in the code that it holds from the base commit.
+No issue of upstream names them. The engine of `v1.0.0` replaced the code, so
+each one is a fault of upstream before `v1.0.0`.
+
+| Fault | Answer of the fork |
+| --- | --- |
+| a tree of stars took time of the order of the length of the input to the power of the number of stars. `*a*a*a*a*b` took 40 seconds on 400 bytes | linear time (D20) |
+| with more than one separator, a star found the first separator of the list, not the first separator of the input | fixed (D20) |
+| the last separator that is not ASCII was found in the wrong part of the input, and could panic | fixed (D20) |
+| a byte that is not valid UTF-8 had the width 3 in the segments of five matchers | fixed (D20) |
+| the tail of an input counted a byte that is not valid UTF-8 wrongly, and took U+FFFD for such a byte | fixed (D20) |
+| the debug build, with the tag `globdebug`, did not compile | fixed. CI vets it |
+
 ### Faults that the fork had fixed already
 
 Issues 7, 9, 11, 15, 18, 23, 28, 33, 36, 38, 41, 43, 50, 54, 62 and 66, and
@@ -124,7 +139,7 @@ holds in a different form, where the fault does not happen.
 | issue 32, pull request 81 | `MatchBytes` | added (D13) |
 | issues 46, 58 and 76, pull request 82 | globstar | `WithGlobstar` (D16) |
 | `a82038c` | `Separators` | added (D13) |
-| `fuzz_test.go` of upstream | a fuzz test against a reference | `FuzzMatchersAgree`, against the backtracking matcher (D12) |
+| `fuzz_test.go` of upstream | a fuzz test against a reference | `FuzzMatchersAgree` and `FuzzCompile`, against the NFA matcher (D12, D20) |
 
 ### Not applicable
 

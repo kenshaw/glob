@@ -130,8 +130,18 @@ func (l *Lexer) Next() Token {
 	return token
 }
 
-// run reads the whole pattern.
+// run reads the whole pattern. A pattern that is not valid UTF-8 is an error
+// (D8), wherever the invalid byte is: in text, after an escape, or in a
+// bracket expression.
 func (l *Lexer) run() {
+	if !utf8.ValidString(l.src) {
+		for i, r := range l.src {
+			if r == utf8.RuneError && runeWidth(l.src, i) == 1 {
+				l.errorf("invalid utf-8 in pattern at offset %d", i)
+				return
+			}
+		}
+	}
 	for l.err == nil {
 		if !l.fetchItem() {
 			break

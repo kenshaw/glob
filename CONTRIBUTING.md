@@ -22,12 +22,23 @@ golangci-lint run ./...
 formatted. CI runs the same commands.
 
 After a change of a matcher, of the optimizer or of the parser, run the fuzz
-test for some minutes. It compares the optimized matchers with the
-backtracking matcher (D12):
+tests for some minutes. `FuzzMatchersAgree` compares the optimized matchers
+with the NFA matcher (D12, D20). `FuzzCompile` gives any bytes to the
+compiler, with each option:
 
 ```bash
 go test -run=NONE -fuzz=FuzzMatchersAgree -fuzztime=5m .
 ```
+
+```bash
+go test -run=NONE -fuzz=FuzzCompile -fuzztime=5m .
+```
+
+A match must take time linear in the length of the input (D20). If you add a
+matcher, teach `syntax.Linear` about it, or the compiler gives its patterns
+the NFA matcher. `TestWorstCase` holds the shapes that took more than linear
+time once, and `TestAllocs` makes sure that a match does not allocate. To
+compare the benchmarks with a revision, run `./bench.sh <revision>`.
 
 ## Upstream
 

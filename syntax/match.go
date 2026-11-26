@@ -238,13 +238,9 @@ func glueMatchersAsRow(ms []Matcher) Matcher {
 	if len(ms) <= 1 {
 		return nil
 	}
-	var s []MatchIndexSizer
-	for _, m := range ms {
-		rsz, ok := m.(MatchIndexSizer)
-		if !ok {
-			return nil
-		}
-		s = append(s, rsz)
+	s, ok := MatchIndexSizers(ms)
+	if !ok {
+		return nil
 	}
 	return NewRow(s)
 }

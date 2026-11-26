@@ -56,6 +56,11 @@ jobs:
       - name: Build without cgo
         run: CGO_ENABLED=0 go build ./...
 
+      - name: Vet the debug build
+        # The tag globdebug prints each step of a match. Nothing else builds
+        # it, so vet it here to keep it compiling.
+        run: go vet -tags globdebug ./...
+
       - name: Test
         # -count=2 finds a test that passes only once, such as one that
         # changes a value of the package.
@@ -63,7 +68,9 @@ jobs:
 
       - name: Fuzz
         # A short run on each push. The optimized matchers must agree with the
-        # backtracking matcher (D12), and Quote must round trip (D15).
+        # NFA matcher (D12, D20), any bytes must compile or fail without a
+        # panic, and Quote must round trip (D15).
         run: |
           go test -run=NONE -fuzz=FuzzMatchersAgree -fuzztime=60s .
+          go test -run=NONE -fuzz=FuzzCompile -fuzztime=30s .
           go test -run=NONE -fuzz=FuzzQuote -fuzztime=20s .

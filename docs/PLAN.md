@@ -6,7 +6,7 @@ decisions are in `decisions/`, and the work that is known and not done is in
 
 ## State on 2026-11-26
 
-The work of 2026-11-26 is staged and not committed. It did four things:
+The work of 2026-11-26 is in `v0.2.0`. It did four things:
 
 1. It set the repository up for coding agents in the layout of the `xo`
    repositories, with dbmeta as the template (D2 to D5).
@@ -27,17 +27,44 @@ The work of 2026-11-26 is staged and not committed. It did four things:
 passes on both matchers. It skips the vectors of the options and the dialects
 that the fork does not have.
 
+Later on 2026-11-26, the work on the time and the allocations of a match did
+four things (D20):
+
+1. It found that a match could take time of the order of the length of the
+   input to the power of the number of stars, and made each match linear. The
+   NFA matcher replaces the backtracking matcher, and the compiler gives it
+   each tree of optimized matchers that `syntax.Linear` does not know to be
+   linear.
+2. It removed the allocations of a match. A match with fold does not copy an
+   input that is lower case already (D17), and `MatchBytes` of `Path` and
+   `Host` does not copy its input. A glob without a pattern matches nothing,
+   and does not panic.
+3. It added `FuzzCompile`, and sets of separators to `FuzzMatchersAgree`.
+   The fuzz tests and a reading of the code found three faults on input that
+   is not valid UTF-8, two faults with separators, and a debug build that did
+   not compile. Each is fixed, and `UPSTREAM.md` lists them.
+4. It made the compiler faster: `Compile` of the benchmark pattern takes 5.4
+   microseconds and 183 allocations, in place of 6.7 microseconds and 293
+   allocations.
+
+A maintainer asked for the minor release `v0.2.0` on 2026-11-26, which
+answers question 4. It holds both pieces of work.
+
 ## Open questions
 
-The numbers do not repeat. The next question is question 6.
+The numbers do not repeat. The next question is question 7.
 
-1. D7 to D19 are proposed. Do the maintainers decide them as they are?
+1. D7 to D20 are proposed. Do the maintainers decide them as they are?
 2. Extended groups are on by default (D10). A pattern that held `@(` or `+(`
    as text now holds a group. Is that change acceptable for a minor version,
    or do the maintainers want an option that turns the groups on?
 3. `[^...]` is a negation now (D9), and before it matched `^`. Is that change
    acceptable for a minor version?
-4. The next tag. The API grew, and some patterns match differently (D8, D9,
-   D10, D16). Is it `v0.2.0`?
 5. `notes.txt` in the root holds the two ideas that D10 and D14 answer. git
    does not track it. Can a maintainer delete it?
+6. A pattern whose tree of optimized matchers is not linear gets the NFA
+   matcher (D20). It is safe on any input, but it can take about twice the
+   time on a short input. The benchmark pattern
+   `[a-z][!a-x]*cat*[h][!b]*eyes*` takes 180 ns in place of 90 ns. Is that
+   cost acceptable, or do the maintainers want an option that keeps the
+   optimized matchers for trusted input?

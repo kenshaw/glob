@@ -355,7 +355,7 @@ func (ListMatcher) Size() int {
 func (m ListMatcher) Index(s string) (int, []int) {
 	for i, r := range s {
 		if m.not == (runesIndexRune(m.rs, r) == -1) {
-			return i, segmentsByRuneLength[utf8.RuneLen(r)]
+			return i, segmentsByRuneLength[runeWidth(s, i)]
 		}
 	}
 	return -1, nil
@@ -393,12 +393,12 @@ func (m MaxMatcher) Index(s string) (int, []int) {
 	segments := acquireSegments(m.n + 1)
 	segments = append(segments, 0)
 	var count int
-	for i, r := range s {
+	for i := range s {
 		count++
 		if count > m.n {
 			break
 		}
-		segments = append(segments, i+utf8.RuneLen(r))
+		segments = append(segments, i+runeWidth(s, i))
 	}
 	return 0, segments
 }
@@ -438,10 +438,10 @@ func (m MinMatcher) Index(s string) (int, []int) {
 		return -1, nil
 	}
 	segments := acquireSegments(c)
-	for i, r := range s {
+	for i := range s {
 		count++
 		if count >= m.n {
-			segments = append(segments, i+utf8.RuneLen(r))
+			segments = append(segments, i+runeWidth(s, i))
 		}
 	}
 	if len(segments) == 0 {
@@ -509,8 +509,8 @@ func (m PrefixAnyMatcher) Index(s string) (int, []int) {
 	}
 	seg := acquireSegments(len(sub) + 1)
 	seg = append(seg, n)
-	for i, r := range sub {
-		seg = append(seg, n+i+utf8.RuneLen(r))
+	for i := range sub {
+		seg = append(seg, n+i+runeWidth(sub, i))
 	}
 	return idx, seg
 }
@@ -557,8 +557,8 @@ func (m PrefixMatcher) Index(s string) (int, []int) {
 	}
 	segments := acquireSegments(len(sub) + 1)
 	segments = append(segments, length)
-	for i, r := range sub {
-		segments = append(segments, length+i+utf8.RuneLen(r))
+	for i := range sub {
+		segments = append(segments, length+i+runeWidth(sub, i))
 	}
 	return idx, segments
 }
@@ -656,7 +656,7 @@ func (m RangeMatcher) Index(s string) (index int, segments []int) {
 	}
 	for i, r := range s {
 		if m.Not != (r >= m.Lo && r <= m.Hi) {
-			return i, segmentsByRuneLength[utf8.RuneLen(r)]
+			return i, segmentsByRuneLength[runeWidth(s, i)]
 		}
 	}
 	return -1, nil
@@ -785,7 +785,7 @@ func (SingleMatcher) Size() int {
 func (m SingleMatcher) Index(v string) (int, []int) {
 	for i, r := range v {
 		if runesIndexRune(m.sep, r) == -1 {
-			return i, segmentsByRuneLength[utf8.RuneLen(r)]
+			return i, segmentsByRuneLength[runeWidth(v, i)]
 		}
 	}
 	return -1, nil
@@ -973,7 +973,26 @@ type TreeMatcher struct {
 	vrunes int
 	lrunes int
 	rrunes int
+	// mode tells Match which occurrences of the value it must try.
+	mode treeMode
 }
+
+// treeMode tells [TreeMatcher.Match] which occurrences of the value it must
+// try. Without a mode, a tree of n stars takes time of the order of the
+// length of the input to the power n.
+type treeMode uint8
+
+const (
+	// treeEvery tries every occurrence of the value.
+	treeEvery treeMode = iota
+	// treeFirst tries only the occurrence that ends first. The left side
+	// matches any prefix, and the right side matches each string that ends
+	// with a string that it matches. A longer rest can only help.
+	treeFirst
+	// treeLast tries only the occurrence that starts last. It is treeFirst
+	// with the sides swapped.
+	treeLast
+)
 
 func NewTree(v MatchIndexer, l, r Matcher) Matcher {
 	tree := TreeMatcher{
@@ -1004,11 +1023,117 @@ func NewTree(v MatchIndexer, l, r Matcher) Matcher {
 	}
 	// li, lix := l.(MatchIndexer)
 	// ri, rix := r.(MatchIndexer)
+	tree.mode = newTreeMode(v, l, r)
 	if vsz && lsz && rsz {
 		tree.runes = tree.vrunes + tree.lrunes + tree.rrunes
 		return SizedTreeMatcher{tree}
 	}
 	return tree
+}
+
+// newTreeMode returns the mode of a tree of v, l and r.
+func newTreeMode(v MatchIndexer, l, r Matcher) treeMode {
+	if star, ok := starSeparators(l); ok && openLeft(r, star) && textWithout(v, star) {
+		return treeFirst
+	}
+	if star, ok := starSeparators(r); ok && openRight(l, star) && textWithout(v, star) {
+		return treeLast
+	}
+	return treeEvery
+}
+
+// starSeparators reports whether m is a star, and returns the separators that
+// the star cannot match. A star `**` has none.
+func starSeparators(m Matcher) ([]rune, bool) {
+	switch m := m.(type) {
+	case SuperMatcher:
+		return nil, true
+	case AnyMatcher:
+		return m.sep, true
+	}
+	return nil, false
+}
+
+// textWithout reports whether no match of v can hold a rune of sep. It is
+// true for each v when sep is empty.
+func textWithout(v MatchIndexer, sep []rune) bool {
+	if len(sep) == 0 {
+		return true
+	}
+	t, ok := v.(TextMatcher)
+	return ok && !strings.ContainsFunc(t.s, func(r rune) bool { return slices.Contains(sep, r) })
+}
+
+// subset reports whether each rune of a is in b.
+func subset(a, b []rune) bool {
+	for _, r := range a {
+		if !slices.Contains(b, r) {
+			return false
+		}
+	}
+	return true
+}
+
+// openLeft reports whether m matches x+s whenever it matches s, for each x
+// that holds no rune of sep. An empty sep means each x.
+func openLeft(m Matcher, sep []rune) bool {
+	switch m := m.(type) {
+	case SuperMatcher, SuffixMatcher:
+		return true
+	case ContainsMatcher:
+		return !m.not
+	case AnyMatcher:
+		return len(sep) != 0 && subset(m.sep, sep)
+	case SuffixAnyMatcher:
+		return len(sep) != 0 && subset(m.sep, sep)
+	case TreeMatcher:
+		return m.lrunes == 0 && openLeft(m.left, sep)
+	case SizedTreeMatcher:
+		return false
+	case AnyOfMatcher:
+		return allOpen(m.v, sep, openLeft)
+	case IndexedAnyOfMatcher:
+		return allOpen(m.AnyOfMatcher.v, sep, openLeft)
+	case IndexedSizedAnyOfMatcher:
+		return allOpen(m.AnyOfMatcher.v, sep, openLeft)
+	}
+	return false
+}
+
+// openRight reports whether m matches s+x whenever it matches s, for each x
+// that holds no rune of sep. An empty sep means each x.
+func openRight(m Matcher, sep []rune) bool {
+	switch m := m.(type) {
+	case SuperMatcher, PrefixMatcher:
+		return true
+	case ContainsMatcher:
+		return !m.not
+	case AnyMatcher:
+		return len(sep) != 0 && subset(m.sep, sep)
+	case PrefixAnyMatcher:
+		return len(sep) != 0 && subset(m.sep, sep)
+	case TreeMatcher:
+		return m.rrunes == 0 && openRight(m.right, sep)
+	case SizedTreeMatcher:
+		return false
+	case AnyOfMatcher:
+		return allOpen(m.v, sep, openRight)
+	case IndexedAnyOfMatcher:
+		return allOpen(m.AnyOfMatcher.v, sep, openRight)
+	case IndexedSizedAnyOfMatcher:
+		return allOpen(m.AnyOfMatcher.v, sep, openRight)
+	}
+	return false
+}
+
+// allOpen reports whether open is true for each matcher of v.
+func allOpen(v []Matcher, sep []rune, open func(Matcher, []rune) bool) bool {
+	for _, m := range v {
+		if !open(m, sep) {
+			return false
+		}
+	}
+	return true
 }
 
 func (m TreeMatcher) Len() int {
@@ -1030,8 +1155,16 @@ func (m TreeMatcher) Match(s string) (ok bool) {
 		done := debugMatching("tree", s)
 		defer func() { done(ok) }()
 	}
+	switch m.mode {
+	case treeFirst:
+		return m.matchFirst(s)
+	case treeLast:
+		return m.matchLast(s)
+	}
 	n := len(s)
 	offset, limit := m.offsetLimit(s)
+	sides := newTreeSides(m.left, m.right, s)
+	lazy := !side(m.left) && side(m.right)
 	for len(s)-offset-limit >= m.vrunes {
 		if debugEnabled {
 			debugLogf(
@@ -1050,37 +1183,155 @@ func (m TreeMatcher) Match(s string) (ok bool) {
 			releaseSegments(segments)
 			return false
 		}
-		if debugEnabled {
-			debugLogf("matching left: %q", s[:offset+index])
+		index += offset
+		// A left side that takes time is matched only after a right side
+		// matched, so that a right side such as nothing saves the time.
+		var left, stop bool
+		if !lazy {
+			left, stop = sides.left(m.left, s, index)
 		}
-		left := m.left.Match(s[:offset+index])
-		if debugEnabled {
-			debugLogf("matching left: -> %t", left)
+		if stop {
+			// No longer left side can match either.
+			releaseSegments(segments)
+			return false
 		}
-		if left {
+		if left || lazy {
 			for _, seg := range segments {
-				if debugEnabled {
-					debugLogf("matching right: %q", s[offset+index+seg:])
+				if !sides.right(m.right, s, index+seg) {
+					continue
 				}
-				right := m.right.Match(s[offset+index+seg:])
-				if debugEnabled {
-					debugLogf("matching right: -> %t", right)
+				if lazy {
+					if left, _ = sides.left(m.left, s, index); !left {
+						break
+					}
 				}
-				if right {
-					releaseSegments(segments)
-					return true
-				}
+				releaseSegments(segments)
+				return true
 			}
 		}
 		releaseSegments(segments)
-		_, x := utf8.DecodeRuneInString(s[offset+index:])
+		_, x := utf8.DecodeRuneInString(s[index:])
 		if x == 0 {
 			// No progress.
 			break
 		}
-		offset = offset + index + x
+		offset = index + x
 	}
 	return false
+}
+
+// treeSides answers the matches of the sides of a tree. It answers a side
+// that is a star or nothing from the positions of the separators, which it
+// finds once for each input. Without them, each answer takes time linear in
+// the length of the input.
+type treeSides struct {
+	firstSep, lastSep int
+}
+
+// newTreeSides returns the sides of a tree of l and r for the input s.
+func newTreeSides(l, r Matcher, s string) treeSides {
+	t := treeSides{firstSep: len(s), lastSep: -1}
+	if a, ok := l.(AnyMatcher); ok {
+		if i := runesIndexAnyRune(s, a.sep); i != -1 {
+			t.firstSep = i
+		}
+	}
+	if a, ok := r.(AnyMatcher); ok {
+		t.lastSep = runesLastIndexAnyRune(s, a.sep)
+	}
+	return t
+}
+
+// left reports whether l matches s[:i]. It also reports whether l cannot
+// match s[:j] for each j >= i.
+func (t treeSides) left(l Matcher, s string, i int) (ok, stop bool) {
+	switch l.(type) {
+	case AnyMatcher:
+		ok = i <= t.firstSep
+		return ok, !ok
+	case NothingMatcher:
+		return i == 0, i != 0
+	}
+	if debugEnabled {
+		debugLogf("matching left: %q", s[:i])
+	}
+	return l.Match(s[:i]), false
+}
+
+// right reports whether r matches s[i:].
+func (t treeSides) right(r Matcher, s string, i int) bool {
+	switch r.(type) {
+	case AnyMatcher:
+		return i > t.lastSep
+	case NothingMatcher:
+		return i == len(s)
+	}
+	if debugEnabled {
+		debugLogf("matching right: %q", s[i:])
+	}
+	return r.Match(s[i:])
+}
+
+// matchFirst answers Match for the mode treeFirst. It finds the occurrence of
+// the value that ends first, and matches the right side once.
+func (m TreeMatcher) matchFirst(s string) bool {
+	end := -1
+	sides := newTreeSides(m.left, m.right, s)
+	for offset := 0; offset <= len(s); {
+		index, segments := m.value.Index(s[offset:])
+		if index == -1 {
+			break
+		}
+		index += offset
+		if end != -1 && index >= end {
+			releaseSegments(segments)
+			break
+		}
+		if left, stop := sides.left(m.left, s, index); stop {
+			releaseSegments(segments)
+			break
+		} else if left {
+			for _, seg := range segments {
+				if end == -1 || index+seg < end {
+					end = index + seg
+				}
+			}
+		}
+		releaseSegments(segments)
+		_, w := utf8.DecodeRuneInString(s[index:])
+		if w == 0 {
+			break
+		}
+		offset = index + w
+	}
+	return end != -1 && m.right.Match(s[end:])
+}
+
+// matchLast answers Match for the mode treeLast. It finds the occurrence of
+// the value that starts last, and matches the left side once.
+func (m TreeMatcher) matchLast(s string) bool {
+	start := -1
+	sides := newTreeSides(m.left, m.right, s)
+	for offset := 0; offset <= len(s); {
+		index, segments := m.value.Index(s[offset:])
+		if index == -1 {
+			break
+		}
+		index += offset
+		for _, seg := range segments {
+			if sides.right(m.right, s, index+seg) {
+				start = index
+				break
+			}
+		}
+		releaseSegments(segments)
+		_, w := utf8.DecodeRuneInString(s[index:])
+		if w == 0 {
+			break
+		}
+		offset = index + w
+	}
+	return start != -1 && m.left.Match(s[:start])
 }
 
 // Returns substring and offset/limit pair in bytes.

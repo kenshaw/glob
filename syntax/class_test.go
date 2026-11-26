@@ -5,6 +5,8 @@ import (
 	"slices"
 	"strings"
 	"testing"
+	"unicode"
+	"unicode/utf8"
 )
 
 // TestLexerExtended holds the tokens of D9, D10 and D11.
@@ -301,8 +303,8 @@ func TestGlobstar(t *testing.T) {
 	}
 }
 
-// TestBacktrack holds D10 and D12.
-func TestBacktrack(t *testing.T) {
+// TestNFA holds D10 and D12.
+func TestNFA(t *testing.T) {
 	t.Parallel()
 	for _, test := range []struct {
 		pattern, s string
@@ -342,29 +344,120 @@ func TestBacktrack(t *testing.T) {
 		if err != nil {
 			t.Fatalf("%q: expected no error, got: %v", test.pattern, err)
 		}
-		m := NewBacktrack(tree, test.sep)
+		m := NewNFA(tree, test.sep)
 		if got := m.Match(test.s); got != test.exp {
 			t.Errorf("%q, %q: expected %t, got: %t", test.pattern, test.s, test.exp, got)
 		}
-		if m.Len() != 0 || !strings.HasPrefix(m.String(), "<backtrack:") {
+		if m.Len() != 0 || !strings.HasPrefix(m.String(), "<nfa:") {
 			t.Errorf("%q: unexpected length %d or string %s", test.pattern, m.Len(), m)
 		}
 	}
 }
 
-// TestBacktrackLongInput makes sure that the matcher remembers its answers.
-// Without them, each pattern takes exponential time in the length of the
-// input.
-func TestBacktrackLongInput(t *testing.T) {
+// TestNFALongInput makes sure that a long input does not take exponential
+// time or a deep recursion. A pattern with stars takes time linear in the
+// length of the input. A group that repeats, and a group !(...), take time
+// that is quadratic at worst.
+func TestNFALongInput(t *testing.T) {
 	t.Parallel()
-	s := strings.Repeat("a", 200)
-	for _, pattern := range []string{"*(a|aa)b", "+(a|aa)b", "*a*a*a*a*a*b", "!(b)!(b)!(b)b"} {
+	for _, test := range []struct {
+		pattern string
+		n       int
+	}{
+		{"*a*a*a*a*a*b", 1 << 20},
+		{"+(a)b", 1 << 16},
+		{"*(a|aa)b", 4096},
+		{"+(a|aa)b", 4096},
+		{"!(b)!(b)!(b)b", 1 << 16},
+		{"**!(b)!(b)@(a|b)!(b)b", 1 << 16},
+		{"*!(js|ts)b", 1 << 16},
+		{"*(*a)b", 1024},
+	} {
+		tree, err := Parse(NewLexer(test.pattern))
+		if err != nil {
+			t.Fatalf("%q: expected no error, got: %v", test.pattern, err)
+		}
+		m := NewNFA(tree, nil)
+		s := strings.Repeat("a", test.n)
+		if m.Match(s) {
+			t.Errorf("%q: expected no match", test.pattern)
+		}
+		if !m.Match(s + "b") {
+			t.Errorf("%q: expected a match", test.pattern)
+		}
+	}
+}
+
+// TestFoldRune holds D17. A rune folds to the smallest lower case rune of
+// its orbit, and each rune of an orbit folds to the same rune.
+func TestFoldRune(t *testing.T) {
+	t.Parallel()
+	for _, test := range []struct {
+		r, exp rune
+	}{
+		{'a', 'a'},
+		{'A', 'a'},
+		{'k', 'k'},
+		{'K', 'k'}, // the Kelvin sign
+		{'S', 's'},
+		{'ſ', 's'}, // the long s
+		{'Σ', 'ς'},
+		{'σ', 'ς'},
+		{'ß', 'ß'},
+		{'ẞ', 'ß'},
+		{'0', '0'},
+		{'.', '.'},
+		{'é', 'é'},
+		{'É', 'é'},
+	} {
+		if got := FoldRune(test.r); got != test.exp {
+			t.Errorf("FoldRune(%q): expected %q, got: %q", test.r, test.exp, got)
+		}
+	}
+	for r := range rune(0x3000) {
+		f := FoldRune(r)
+		for c := unicode.SimpleFold(r); c != r; c = unicode.SimpleFold(c) {
+			if FoldRune(c) != f {
+				t.Fatalf("FoldRune(%q) = %q, but FoldRune(%q) = %q", r, f, c, FoldRune(c))
+			}
+		}
+	}
+}
+
+// TestFoldStringAllocs makes sure that folded text does not allocate.
+func TestFoldStringAllocs(t *testing.T) {
+	s := "www.example.com"
+	if n := testing.AllocsPerRun(100, func() { _ = FoldString(s) }); n != 0 {
+		t.Errorf("expected no allocation, got: %v", n)
+	}
+}
+
+// TestClassASCII makes sure that the table of ASCII runes of a class agrees
+// with Contains.
+func TestClassASCII(t *testing.T) {
+	t.Parallel()
+	for _, pattern := range []string{"[a-z]", "[!a-x]", "[[:alpha:]_]", "[^[:digit:]x]", "[K]", "[ſ-ƀ]", "[%-+]", "[[:punct:][:space:]]", "[\x00-\x7f]"} {
 		tree, err := Parse(NewLexer(pattern))
 		if err != nil {
 			t.Fatalf("%q: expected no error, got: %v", pattern, err)
 		}
-		if NewBacktrack(tree, nil).Match(s) {
-			t.Errorf("%q: expected no match", pattern)
+		for _, n := range []*Node{tree, Fold(tree)} {
+			c := n.Children[0]
+			var d ClassData
+			switch v := c.Value.(type) {
+			case ClassData:
+				d = v
+			case ListData:
+				d = ClassData{Not: v.Not, Chars: v.Chars}
+			case RangeData:
+				d = ClassData{Not: v.Not, Ranges: []RangeData{v}}
+			}
+			table := d.ASCII()
+			for r := range rune(utf8.RuneSelf) {
+				if got := table[r>>6]&(1<<(r&63)) != 0; got != d.Contains(r) {
+					t.Errorf("%q (fold %t): rune %q: expected %t, got: %t", pattern, d.Fold, r, d.Contains(r), got)
+				}
+			}
 		}
 	}
 }

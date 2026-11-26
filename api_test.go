@@ -4,7 +4,10 @@ import (
 	"encoding/json"
 	"slices"
 	"strconv"
+	"strings"
+	"sync"
 	"testing"
+	"time"
 )
 
 // TestUpstreamIssues runs the cases of the issues of upstream, from
@@ -100,6 +103,10 @@ func TestMalformed(t *testing.T) {
 		"[z-a]",
 		"a\xffb",
 		"[\xff]",
+		"\\\xff",
+		"[\\\x8a]",
+		"[=\xff=]",
+		"{a,\xff}",
 		"{1..100000}",
 	} {
 		if _, err := Compile(pattern); err == nil {
@@ -342,5 +349,169 @@ func TestTextFields(t *testing.T) {
 	}
 	if err := json.Unmarshal([]byte(`{"paths":["a{"]}`), &v); err == nil {
 		t.Errorf("expected an error, got: nil")
+	}
+}
+
+// TestZero makes sure that a glob without a pattern matches nothing, and
+// does not panic.
+func TestZero(t *testing.T) {
+	t.Parallel()
+	var (
+		g Glob
+		p Path
+		h Host
+	)
+	for name, match := range map[string]func(string) bool{
+		"Glob":  g.Match,
+		"New":   New(WithFold()).Match,
+		"Path":  p.Match,
+		"Host":  h.Match,
+		"Bytes": func(s string) bool { return g.MatchBytes([]byte(s)) },
+	} {
+		if match("") || match("a") {
+			t.Errorf("%s: expected no match", name)
+		}
+	}
+}
+
+// TestAllocs makes sure that a match does not allocate, for each shape of
+// matcher and for each type.
+func TestAllocs(t *testing.T) {
+	if race {
+		t.Skip("the race detector makes sync.Pool drop values")
+	}
+	long := strings.Repeat("ab", 512)
+	for _, test := range []struct {
+		pattern, s string
+		opts       []Option
+	}{
+		{"*.go", "main.go", nil},
+		{"[a-z][!a-x]*cat*[h][!b]*eyes*", "my cat has very bright eyes", nil},
+		{"**/*.go", "a/b/c.go", []Option{WithSeparators('/')}},
+		{"*a*a*a*b", long, nil},
+		{"*.!(js|ts)", "main.go", nil},
+		{"+(ab)", long, nil},
+		{"**!(b)a", long, nil},
+		{"*.example.com", "www.example.com", []Option{WithFold(), WithSeparators('.')}},
+	} {
+		g, err := CompileWith(test.pattern, test.opts...)
+		if err != nil {
+			t.Fatalf("CompileWith(%q): expected no error, got: %v", test.pattern, err)
+		}
+		b := []byte(test.s)
+		if n := testing.AllocsPerRun(50, func() { g.Match(test.s) }); n != 0 {
+			t.Errorf("%q: Match: expected no allocation, got: %v (matcher %s)", test.pattern, n, g.Matcher)
+		}
+		if n := testing.AllocsPerRun(50, func() { g.MatchBytes(b) }); n != 0 {
+			t.Errorf("%q: MatchBytes: expected no allocation, got: %v", test.pattern, n)
+		}
+	}
+	p, h := mustPath(t, "src/**/*.go"), mustHost(t, "*.example.com")
+	pb, hb := []byte("src/a/b.go"), []byte("www.example.com.")
+	if n := testing.AllocsPerRun(50, func() { p.MatchBytes(pb) }); n != 0 {
+		t.Errorf("Path.MatchBytes: expected no allocation, got: %v", n)
+	}
+	if n := testing.AllocsPerRun(50, func() { h.MatchBytes(hb) }); n != 0 {
+		t.Errorf("Host.MatchBytes: expected no allocation, got: %v", n)
+	}
+}
+
+// TestConcurrent makes sure that each matcher is safe for concurrent use.
+// Run it with -race.
+func TestConcurrent(t *testing.T) {
+	t.Parallel()
+	inputs := []string{"", "a", "a.go", "a/b.go", "aaab", "x.js", strings.Repeat("ab", 300) + ".go"}
+	for _, pattern := range []string{"*.go", "**/*.go", "*a*a*b", "*.!(js)", "+(a)b", "{a,b}*{c,go}"} {
+		g, err := Compile(pattern, '/')
+		if err != nil {
+			t.Fatalf("Compile(%q): expected no error, got: %v", pattern, err)
+		}
+		exp := make([]bool, len(inputs))
+		for i, s := range inputs {
+			exp[i] = g.Match(s)
+		}
+		var wg sync.WaitGroup
+		for range 8 {
+			wg.Go(func() {
+				for range 50 {
+					for i, s := range inputs {
+						if g.Match(s) != exp[i] {
+							t.Errorf("%q, %q: expected %t", pattern, s, exp[i])
+						}
+					}
+				}
+			})
+		}
+		wg.Wait()
+	}
+}
+
+// mustPath compiles a path pattern.
+func mustPath(tb testing.TB, pattern string) *Path {
+	tb.Helper()
+	p, err := CompilePath(pattern)
+	if err != nil {
+		tb.Fatal(err)
+	}
+	return p
+}
+
+// mustHost compiles a host pattern.
+func mustHost(tb testing.TB, pattern string) *Host {
+	tb.Helper()
+	h, err := CompileHost(pattern)
+	if err != nil {
+		tb.Fatal(err)
+	}
+	return h
+}
+
+// TestWorstCase holds D20. Each pattern took time of the order of the length
+// of the input to the power of the number of its stars, or quadratic time,
+// before the compiler checked that its matchers are linear. With an input of
+// 64 KiB, a match that is not linear takes minutes.
+func TestWorstCase(t *testing.T) {
+	t.Parallel()
+	n := 1 << 16
+	if testing.Short() {
+		n = 1 << 12
+	}
+	a := strings.Repeat("a", n)
+	for _, test := range []struct {
+		pattern, s string
+		sep        []rune
+	}{
+		{"*a*a*a*a*a*a*a*b", a, nil},
+		{"*a*a*a*a*a*a*a*b", a, []rune{'/'}},
+		{"**a**a**a**b", a, nil},
+		{"*a?*a?*a?*b", a, nil},
+		{"{*a,*b}{*a,*b}{*a,*b}c", a, nil},
+		{"{a*,*b,ab}a?b{*a,b*}*{a,*b}", strings.Repeat("aab", n/3), []rune{'.'}},
+		{"[a-z]*[a-z]*[a-z]*[0-9]", a, nil},
+		{"{a,*b}[ab]", a + "c", nil},
+		{"**{a,*b}a", strings.Repeat("aab", n/3) + "c", nil},
+		{"*{a,b}*{a,b}*{a,b}*c", a, nil},
+		{"*(a|b)*(a|b)c", a, nil},
+		{"+(a|aa)b", a, nil},
+		{"!(b)!(b)!(b)b", a, nil},
+		{"**!(b)!(b)@(a|b)!(b)b", a, nil},
+		{"*.!(js|ts)x", strings.Repeat("a.", n/2), nil},
+		{"**a*", a + "/", []rune{'/'}},
+		{"*a**", "/" + a, []rune{'/'}},
+		{"**a*b", a + "/", []rune{'/'}},
+	} {
+		g, err := Compile(test.pattern, test.sep...)
+		if err != nil {
+			t.Fatalf("Compile(%q): expected no error, got: %v", test.pattern, err)
+		}
+		ref, _ := reference(t, test.pattern, WithSeparators(test.sep...))
+		start := time.Now()
+		got, exp := g.Match(test.s), ref.Match(test.s)
+		if d := time.Since(start); d > 5*time.Second {
+			t.Errorf("%q: expected a match in linear time, took %v (matcher %s)", test.pattern, d, g.Matcher)
+		}
+		if got != exp {
+			t.Errorf("%q: expected %t, got: %t", test.pattern, exp, got)
+		}
 	}
 }

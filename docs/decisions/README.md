@@ -19,7 +19,8 @@ until the maintainers answer it.
 
 D1 to D6 record the fork and the layout of the repository. D7 to D19 were
 proposed on 2026-11-26 with the work that followed upstream and surveyed the
-syntax, and they wait for the maintainers.
+syntax. D20 was proposed on the same day with the work on the time and the
+allocations of a match. They wait for the maintainers.
 
 | # | Decision | Status |
 | --- | --- | --- |
@@ -34,11 +35,12 @@ syntax, and they wait for the maintainers.
 | D9 | [A bracket expression follows POSIX](D009-a-bracket-expression-follows-posix.md) | Proposed |
 | D10 | [Extended groups follow bash extglob, and are on by default](D010-extended-groups-follow-bash-extglob-and-are-on-by-default.md) | Proposed |
 | D11 | [A brace sequence follows bash](D011-a-brace-sequence-follows-bash.md) | Proposed |
-| D12 | [The backtracking matcher matches what the optimizer cannot, and is the reference of the tests](D012-the-backtracking-matcher-matches-what-the-optimizer-cannot-and-is-the-reference-of-the-tests.md) | Proposed |
+| D12 | [The backtracking matcher matches what the optimizer cannot, and is the reference of the tests](D012-the-backtracking-matcher-matches-what-the-optimizer-cannot-and-is-the-reference-of-the-tests.md) | Proposed. Amended by D20 |
 | D13 | [Options are functions, and Compile keeps its signature](D013-options-are-functions-and-compile-keeps-its-signature.md) | Proposed |
 | D14 | [Path and Host are globs with their own options](D014-path-and-host-are-globs-with-their-own-options.md) | Proposed |
 | D15 | [Quote escapes every special character, the comma too](D015-quote-escapes-every-special-character-the-comma-too.md) | Proposed |
 | D16 | [A `**` is a star that crosses separators, and globstar is an option](D016-a-is-a-star-that-crosses-separators-and-globstar-is-an-option.md) | Proposed |
-| D17 | [Case folding maps each rune to the smallest rune of its case orbit](D017-case-folding-maps-each-rune-to-the-smallest-rune-of-its-case-orbit.md) | Proposed |
+| D17 | [Case folding maps each rune to one rune of its case orbit](D017-case-folding-maps-each-rune-to-one-rune-of-its-case-orbit.md) | Proposed |
 | D18 | [The search of the optimizer has a budget](D018-the-search-of-the-optimizer-has-a-budget.md) | Proposed |
 | D19 | [The tests read vectors from the survey of glob syntax](D019-the-tests-read-vectors-from-the-survey-of-glob-syntax.md) | Proposed |
+| D20 | [A match takes linear time, and the NFA matcher replaces the backtracking matcher](D020-a-match-takes-linear-time-and-the-nfa-matcher-replaces-the-backtracking-matcher.md) | Proposed. Amends D12 |

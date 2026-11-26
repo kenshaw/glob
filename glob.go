@@ -115,8 +115,12 @@ func (g *Glob) compile(pattern string) error {
 	return nil
 }
 
-// Match reports whether the glob matches s.
+// Match reports whether the glob matches s. A glob that has no pattern, such
+// as the zero Glob or a glob from [New], matches nothing.
 func (g *Glob) Match(s string) bool {
+	if g.Matcher == nil {
+		return false
+	}
 	if g.opts.fold {
 		s = syntax.FoldString(s)
 	}
@@ -125,8 +129,13 @@ func (g *Glob) Match(s string) bool {
 
 // MatchBytes reports whether the glob matches b. It does not copy b.
 func (g *Glob) MatchBytes(b []byte) bool {
-	// No matcher keeps the string after Match returns.
-	return g.Match(unsafe.String(unsafe.SliceData(b), len(b)))
+	return g.Match(bytesString(b))
+}
+
+// bytesString returns b as a string, without a copy. The caller must not keep
+// the string after b changes. No matcher keeps its input after Match returns.
+func bytesString(b []byte) string {
+	return unsafe.String(unsafe.SliceData(b), len(b))
 }
 
 // Separators returns the separators of the glob.
@@ -188,9 +197,19 @@ type options struct {
 
 // compile compiles the pattern with the options.
 func (o options) compile(pattern string) (syntax.Matcher, error) {
-	tree, err := syntax.Parse(syntax.NewLexer(pattern))
+	tree, sep, err := o.tree(pattern)
 	if err != nil {
 		return nil, err
+	}
+	return tree.Match(sep)
+}
+
+// tree parses the pattern, and changes the tree as the options say. It
+// returns the tree and the separators that the matchers of the tree get.
+func (o options) tree(pattern string) (*syntax.Node, []rune, error) {
+	tree, err := syntax.Parse(syntax.NewLexer(pattern))
+	if err != nil {
+		return nil, nil, err
 	}
 	sep := o.sep
 	if o.globstar {
@@ -200,7 +219,7 @@ func (o options) compile(pattern string) (syntax.Matcher, error) {
 		tree = syntax.Fold(tree)
 		sep = []rune(syntax.FoldString(string(sep)))
 	}
-	return tree.Match(sep)
+	return tree, sep, nil
 }
 
 // Path is a glob that matches slash-separated paths. Its separator is `/`, and
@@ -235,9 +254,10 @@ func (p *Path) Match(name string) bool {
 	return p.Glob.Match(filepath.ToSlash(name))
 }
 
-// MatchBytes reports whether the path matches b.
+// MatchBytes reports whether the path matches b. It does not copy b, unless
+// the separator of the operating system is not a slash.
 func (p *Path) MatchBytes(b []byte) bool {
-	return p.Match(string(b))
+	return p.Match(bytesString(b))
 }
 
 // UnmarshalText satisfies the [encoding.TextUnmarshaler] interface.
@@ -279,9 +299,10 @@ func (h *Host) Match(name string) bool {
 	return h.Glob.Match(strings.TrimSuffix(name, "."))
 }
 
-// MatchBytes reports whether the host matches b.
+// MatchBytes reports whether the host matches b. It does not copy b, unless
+// b holds an upper case letter.
 func (h *Host) MatchBytes(b []byte) bool {
-	return h.Match(string(b))
+	return h.Match(bytesString(b))
 }
 
 // UnmarshalText satisfies the [encoding.TextUnmarshaler] interface.
