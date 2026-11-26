@@ -1,9 +1,25 @@
+# Everything this repository ignores, in one file. A second .gitignore in a
+# folder is a rule that nobody can audit.
+
+# The files of an editor.
 glob.iml
 .idea
+
+# The profiles and the results of benchmarks, and the files that bench.sh
+# writes.
 *.cpu
 *.mem
 *.test
+*.bench
+
+# The output of cmd/globdraw.
 *.dot
 *.png
 *.svg
 patterns.txt
+
+# The Claude Code permissions of one person. See D2.
+.claude/settings.local.json
+
+# The checkout of upstream, the reference for the fork. See D6.
+/upstream/

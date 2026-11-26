@@ -358,14 +358,15 @@ func TestPrefixSuffixIndex(t *testing.T) {
 			"f",
 			"fffabfff",
 			0,
-			[]int{1, 2, 3, 6, 7, 8},
+			[]int{2, 3, 6, 7, 8},
 		},
 		{
+			// The suffix overlaps the prefix, so ab*bc does not match abc.
 			"ab",
 			"bc",
 			"abc",
-			0,
-			[]int{3},
+			-1,
+			nil,
 		},
 	} {
 		p := NewPrefixSuffix(test.prefix, test.suffix)

@@ -405,7 +405,17 @@ func maxNestingDepth(ms []Matcher) (max int) {
 	return
 }
 
-func minimizeMatcher(ms []Matcher, i, j int, best *result) *result {
+// minimizeBudget is the largest number of steps of the search in
+// MinimizeMatcher. The search tries every way to glue neighbors, so its cost
+// grows exponentially with the number of matchers. After the budget, it keeps
+// the best result so far. Every result matches the same strings.
+const minimizeBudget = 4096
+
+func minimizeMatcher(ms []Matcher, i, j int, best *result, budget *int) *result {
+	if *budget <= 0 {
+		return best
+	}
+	*budget--
 	if j > len(ms) {
 		j = 0
 		i++
@@ -440,12 +450,12 @@ func minimizeMatcher(ms []Matcher, i, j int, best *result) *result {
 				debugLogf("new best result")
 			}
 		}
-		best = minimizeMatcher(cp, 0, 0, best)
+		best = minimizeMatcher(cp, 0, 0, best, budget)
 		if debugEnabled {
 			debugLeavePrefix()
 		}
 	}
-	return minimizeMatcher(ms, i, j+1, best)
+	return minimizeMatcher(ms, i, j+1, best, budget)
 }
 
 func MinimizeMatcher(ms []Matcher) (m []Matcher) {
@@ -456,7 +466,8 @@ func MinimizeMatcher(ms []Matcher) (m []Matcher) {
 			debugLeavePrefix()
 		}()
 	}
-	best := minimizeMatcher(ms, 0, 0, nil)
+	budget := minimizeBudget
+	best := minimizeMatcher(ms, 0, 0, nil, &budget)
 	if best == nil {
 		return ms
 	}

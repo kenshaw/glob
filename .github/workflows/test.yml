@@ -1,16 +1,69 @@
-on: [push, pull_request]
+# Tests glob on every push and pull request.
+#
+# The package is pure Go, carries no build constraint, and depends on the
+# standard library alone (D5), so one runner is enough.
 name: Test
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# A newer push to the same branch makes the older run useless, so cancel it.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   test:
     name: Test
     runs-on: ubuntu-latest
     steps:
-      - name: Install Go
-        uses: actions/setup-go@v5
+      - name: Check out
+        uses: actions/checkout@v5
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
         with:
-          go-version: stable
-      - name: Checkout code
-        uses: actions/checkout@v4
-      - name: Build
+          go-version-file: go.mod
+          check-latest: true
+
+      - name: Lint
+        # Pinned. The configuration is `default: all`, so an unpinned upgrade
+        # enables a new linter and fails a build that changed nothing.
+        uses: golangci/golangci-lint-action@v9
+        with:
+          version: v2.13.1
+
+      - name: Check formatting
         run: |
-          go test -v ./...
+          out=$(gofmt -l .)
+          if [ -n "$out" ]; then
+            echo "these files are not formatted:"
+            echo "$out"
+            exit 1
+          fi
+
+      - name: Vet
+        run: go vet ./...
+
+      - name: Build
+        run: go build ./...
+
+      - name: Build without cgo
+        run: CGO_ENABLED=0 go build ./...
+
+      - name: Test
+        # -count=2 finds a test that passes only once, such as one that
+        # changes a value of the package.
+        run: go test -race -count=2 ./...
+
+      - name: Fuzz
+        # A short run on each push. The optimized matchers must agree with the
+        # backtracking matcher (D12), and Quote must round trip (D15).
+        run: |
+          go test -run=NONE -fuzz=FuzzMatchersAgree -fuzztime=60s .
+          go test -run=NONE -fuzz=FuzzQuote -fuzztime=20s .

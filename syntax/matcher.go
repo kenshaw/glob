@@ -277,49 +277,47 @@ type IndexedEveryOf struct {
 }
 
 func (m IndexedEveryOf) Index(s string) (int, []int) {
-	var index int
-	var offset int
-	// make `in` with cap as len(s),
-	// cause it is the maximum size of output segments values
-	next := acquireSegments(len(s))
-	current := acquireSegments(len(s))
-	sub := s
-	for i, m := range m.ms {
-		idx, seg := m.Index(sub)
-		if idx == -1 {
-			releaseSegments(next)
-			releaseSegments(current)
-			return -1, nil
-		}
-		if i == 0 {
-			// we use copy here instead of `current = seg`
-			// cause seg is a slice from reusable buffer `in`
-			// and it could be overwritten in next iteration
-			current = append(current, seg...)
-		} else {
-			// clear the next
-			next = next[:0]
-			delta := index - (idx + offset)
-			for _, ex := range current {
-				for _, n := range seg {
-					if ex+delta == n {
-						next = append(next, n)
-					}
-				}
-			}
-			if len(next) == 0 {
-				releaseSegments(next)
-				releaseSegments(current)
+	// Each matcher reports the first index where it can match. The index of
+	// all of them is the first index where each can match, with a length
+	// that each can match.
+	for i := 0; i <= len(s); {
+		var (
+			current []int
+			skip    int
+		)
+		for k, mi := range m.ms {
+			idx, seg := mi.Index(s[i:])
+			if idx == -1 {
 				return -1, nil
 			}
-			current = append(current[:0], next...)
+			if idx > 0 {
+				skip = max(skip, idx)
+				continue
+			}
+			if skip != 0 {
+				continue
+			}
+			if k == 0 {
+				current = append(current, seg...)
+				continue
+			}
+			current = slices.DeleteFunc(current, func(n int) bool {
+				return !slices.Contains(seg, n)
+			})
 		}
-		index = idx + offset
-		sub = s[index:]
-		offset += idx
+		switch {
+		case skip != 0:
+			i += skip
+		case len(current) != 0:
+			return i, current
+		case i == len(s):
+			return -1, nil
+		default:
+			_, w := utf8.DecodeRuneInString(s[i:])
+			i += w
+		}
 	}
-	releaseSegments(next)
-	return index, current
+	return -1, nil
 }
 
 // String satisfies the [fmt.Stringer] interface.
@@ -338,7 +336,7 @@ func NewList(rs []rune, not bool) ListMatcher {
 
 func (m ListMatcher) Match(s string) bool {
 	r, w := utf8.DecodeRuneInString(s)
-	if len(s) > w {
+	if w == 0 || len(s) > w {
 		// Invalid rune.
 		return false
 	}
@@ -598,28 +596,18 @@ func (m PrefixSuffixMatcher) Index(s string) (int, []int) {
 	if suffixLen <= 0 {
 		return prefixIdx, []int{len(s) - prefixIdx}
 	}
-	if (len(s) - prefixIdx) <= 0 {
+	// Each occurrence of the suffix after the prefix ends a match.
+	// Occurrences can overlap each other, and must not overlap the prefix.
+	sub := s[prefixIdx:]
+	i := strings.Index(sub[len(m.p):], m.s)
+	if i == -1 {
 		return -1, nil
 	}
-	segments := acquireSegments(len(s) - prefixIdx)
-	for sub := s[prefixIdx:]; ; {
-		suffixIdx := strings.LastIndex(sub, m.s)
-		if suffixIdx == -1 {
-			break
-		}
-		segments = append(segments, suffixIdx+suffixLen)
-		sub = sub[:suffixIdx]
-	}
-	if len(segments) == 0 {
-		releaseSegments(segments)
-		return -1, nil
-	}
-	slices.Reverse(segments)
-	return prefixIdx, segments
+	return prefixIdx, suffixEnds(sub, m.s, len(m.p)+i)
 }
 
 func (m PrefixSuffixMatcher) Match(s string) bool {
-	return strings.HasPrefix(s, m.p) && strings.HasSuffix(s, m.s)
+	return len(s) >= len(m.p)+len(m.s) && strings.HasPrefix(s, m.p) && strings.HasSuffix(s, m.s)
 }
 
 func (m PrefixSuffixMatcher) Len() int {
@@ -654,7 +642,7 @@ func (m RangeMatcher) Match(s string) (ok bool) {
 		defer func() { done(ok) }()
 	}
 	r, w := utf8.DecodeRuneInString(s)
-	if len(s) > w {
+	if w == 0 || len(s) > w {
 		return false
 	}
 	inRange := r >= m.Lo && r <= m.Hi
@@ -731,11 +719,16 @@ func (m RowMatcher) Index(s string) (index int, segments []int) {
 		if i == -1 {
 			return -1, nil
 		}
-		if m.matchAll(s[i:]) {
-			return j + i, m.seg
+		i += j
+		if runesHasRunes(s[i:], m.n) && m.matchAll(s[i:]) {
+			// A segment is a length in bytes, and the row is m.n runes.
+			if n := len(runesHead(s[i:], m.n)); n != m.n {
+				return i, []int{n}
+			}
+			return i, m.seg
 		}
 		_, x := utf8.DecodeRuneInString(s[i:])
-		j += x
+		j = i + max(x, 1)
 	}
 	return -1, nil
 }
@@ -775,7 +768,7 @@ func NewSingle(s []rune) SingleMatcher {
 
 func (m SingleMatcher) Match(v string) bool {
 	r, w := utf8.DecodeRuneInString(v)
-	if len(v) > w {
+	if w == 0 || len(v) > w {
 		return false
 	}
 	return runesIndexRune(m.sep, r) == -1
@@ -822,7 +815,34 @@ func (m SuffixAnyMatcher) Index(v string) (int, []int) {
 		return -1, nil
 	}
 	i := runesLastIndexAnyRune(v[:idx], m.sep) + 1
-	return i, []int{idx + len(m.s) - i}
+	// Each occurrence of the suffix ends a match, until a separator.
+	var seg []int
+	for _, p := range suffixEnds(v, m.s, idx) {
+		if runesIndexAnyRune(v[i:p-len(m.s)], m.sep) != -1 {
+			break
+		}
+		seg = append(seg, p-i)
+	}
+	return i, seg
+}
+
+// suffixEnds returns the end of each occurrence of suffix in v, starting with
+// the occurrence at idx. Occurrences can overlap.
+func suffixEnds(v, suffix string, idx int) []int {
+	var ends []int
+	for idx != -1 {
+		ends = append(ends, idx+len(suffix))
+		_, w := utf8.DecodeRuneInString(v[idx:])
+		if w == 0 {
+			break
+		}
+		next := strings.Index(v[idx+w:], suffix)
+		if next == -1 {
+			break
+		}
+		idx += w + next
+	}
+	return ends
 }
 
 func (m SuffixAnyMatcher) Len() int {
@@ -860,7 +880,7 @@ func (m SuffixMatcher) Match(v string) bool {
 
 func (m SuffixMatcher) Index(v string) (int, []int) {
 	if i := strings.Index(v, m.s); i != -1 {
-		return 0, []int{i + len(m.s)}
+		return 0, suffixEnds(v, m.s, i)
 	}
 	return -1, nil
 }

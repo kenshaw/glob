@@ -1,25 +1,132 @@
+# Lint configuration of the module.
+#
+# The posture is `default: all` with a disable list, as in the other xo
+# repositories. A linter that makes idiomatic Go worse is disabled here, with
+# the reason beside it. Only a real defect gets a code change. A change made to
+# quiet a linter, rather than to fix something, is itself the defect.
+#
+# The package syntax holds code that came from upstream (D1). The linters that
+# report its style are excluded for those files below, and docs/BACKLOG.md
+# holds the item that cleans them up.
 version: "2"
+
 linters:
   default: all
   disable:
-    - cyclop
-    - depguard
-    - err113
-    - errcheck
-    - exhaustive
-    - exhaustruct
-    - forcetypeassert
-    - funlen
-    - inamedparam
-    - ireturn
-    - mnd
-    - nlreturn
-    - paralleltest
-    - testpackage
-    - varnamelen
-    - wrapcheck
+    # Style opinions that argue with gofmt or with plain code.
     - wsl
-    - gocognit
-    - gosec
+    - wsl_v5
+    - nlreturn
+    - varnamelen
+    - mnd
     - lll
+    - exhaustruct
+    - exhaustruct_v5
+    - funcorder
+    # The standard library writes `if err := f(); err != nil`.
+    - noinlineerr
+    # The tables of named classes and of segment pools are package values by
+    # design, and the pools fill from init.
+    - gochecknoglobals
+    - gochecknoinits
+    # A table test repeats its strings on purpose.
+    - goconst
+    # Complexity metrics. A lexer is one switch per state.
+    - cyclop
+    - funlen
+    - gocognit
+    - gocyclo
     - maintidx
+    - nestif
+    # The matchers return the interface Matcher on purpose, because the
+    # optimizer picks the concrete type.
+    - ireturn
+    # The debug hooks of the matchers read named results in a deferred call.
+    - nonamedreturns
+    # An error of this module is a string today. docs/BACKLOG.md holds the
+    # item for an error type with an offset.
+    - err113
+    - wrapcheck
+    # Glob has value receivers for MarshalText and String, so that a struct
+    # field of type Glob marshals as its pattern, and pointer receivers for
+    # the methods that compile.
+    - recvcheck
+    # A switch on the type of a node handles the types that the node can be,
+    # and answers the rest after the switch. An empty case says less.
+    - exhaustive
+    # The type of a node names the type of its value, so a checked assertion
+    # is a guard that can never fire.
+    - forcetypeassert
+    # depguard holds D5, and holding it twice means two places to change it.
+    # gomodguard is deprecated on top of that.
+    - gomodguard
+    - gomodguard_v2
+    # A root test reads unexported names, and the tests of the agent setup are
+    # in package glob_test.
+    - testpackage
+    - paralleltest
+  settings:
+    # A deferred Close of a file that was only read returns an error that
+    # nothing can act on.
+    errcheck:
+      exclude-functions:
+        - (*os.File).Close
+    # D5. The module imports the standard library and itself.
+    depguard:
+      rules:
+        main:
+          list-mode: strict
+          allow:
+            - $gostd
+            - github.com/kenshaw/glob
+    errorlint:
+      errorf: true
+      asserts: true
+      comparison: true
+    gosec:
+      excludes:
+        # MatchBytes reads a byte slice as a string without a copy, and no
+        # matcher keeps the string after the call.
+        - G103
+  exclusions:
+    rules:
+      # The code that came from upstream, until docs/BACKLOG.md item 8.
+      - path: (syntax/(match|matcher|node|syntax|runes|debug_disabled|debug_enabled)\.go|syntax/[a-z]+_test\.go|cmd/|bench_test\.go|glob_test\.go|example_test\.go)
+        linters:
+          - errcheck
+          - gosec
+          - godoclint
+          - inamedparam
+          - revive
+          - staticcheck
+          - unused
+          - perfsprint
+          - prealloc
+          - predeclared
+          - godot
+          - godox
+          - embeddedstructfieldcheck
+          - thelper
+          - gocritic
+          - noctx
+          - modernize
+          - forbidigo
+          - gosmopolitan
+          - nakedret
+          - dupword
+          - unparam
+      # A test holds input such as "so so" and runes of every script.
+      - path: _test\.go
+        linters:
+          - dupword
+          - gosmopolitan
+          - gosec
+
+formatters:
+  enable:
+    - gofmt
+    - goimports
+  settings:
+    goimports:
+      local-prefixes:
+        - github.com/kenshaw/glob

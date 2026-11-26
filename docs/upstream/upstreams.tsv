@@ -1,0 +1,2 @@
+repository	url	checkout	base	matched
+glob	https://github.com/gobwas/glob	upstream/glob	e7a84e9525fe90abcda167b604e483cc959ad4aa	ff0540d668f8280e0be2afab426e9c9598c80aaf

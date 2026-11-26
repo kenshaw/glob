@@ -135,3 +135,60 @@ func Example() {
 	// false
 	// false
 }
+
+func ExampleCompileWith() {
+	g, err := glob.CompileWith("*.{go,mod}", glob.WithFold())
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(g.Match("MAIN.GO"))
+	fmt.Println(g.Match("go.sum"))
+	// Output:
+	// true
+	// false
+}
+
+func ExampleCompilePath() {
+	p, err := glob.CompilePath("src/**/*.go")
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(p.Match("src/main.go"))
+	fmt.Println(p.Match("src/a/b/main.go"))
+	fmt.Println(p.Match("src/a/b/main.c"))
+	// Output:
+	// true
+	// true
+	// false
+}
+
+func ExampleCompileHost() {
+	h, err := glob.CompileHost("{,*.}example.com")
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(h.Match("example.com"))
+	fmt.Println(h.Match("WWW.Example.COM."))
+	fmt.Println(h.Match("a.b.example.com"))
+	// Output:
+	// true
+	// true
+	// false
+}
+
+func Example_extended() {
+	for _, pattern := range []string{
+		"[[:upper:]]*",
+		"file{01..03}.txt",
+		"@(foo|bar).txt",
+		"!(*.go)",
+	} {
+		g := glob.Must(pattern)
+		fmt.Println(pattern, g.Match("Readme"), g.Match("file02.txt"), g.Match("bar.txt"), g.Match("main.go"))
+	}
+	// Output:
+	// [[:upper:]]* true false false false
+	// file{01..03}.txt false true false false
+	// @(foo|bar).txt false false true false
+	// !(*.go) true true true false
+}

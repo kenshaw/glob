@@ -2,7 +2,9 @@ package syntax
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
+	"reflect"
 )
 
 type Type int
@@ -17,6 +19,8 @@ const (
 	Super
 	Single
 	AnyOf
+	Class
+	Ext
 )
 
 func (typ Type) String() string {
@@ -39,6 +43,10 @@ func (typ Type) String() string {
 		return "Single"
 	case AnyOf:
 		return "AnyOf"
+	case Class:
+		return "Class"
+	case Ext:
+		return "Ext"
 	}
 	return ""
 }
@@ -70,15 +78,41 @@ func (node *Node) Insert(children ...*Node) {
 	}
 }
 
-// Match builds the matcher for the node.
+// Match builds the matcher for the node. A tree that holds an extended group
+// gets a [BacktrackMatcher], and every other tree gets the matchers that the
+// compiler optimizes. If the compiler cannot build a tree, the tree gets a
+// [BacktrackMatcher] too.
 func (node *Node) Match(sep []rune) (Matcher, error) {
-	return buildMatch(node, sep)
+	if node.Contains(Ext) {
+		return NewBacktrack(node, sep), nil
+	}
+	m, err := buildMatch(node, sep)
+	if err != nil {
+		// The optimizer cannot build every tree, such as a group that holds
+		// only empty groups and stars. The backtracking matcher matches any
+		// tree that the parser builds.
+		return NewBacktrack(node, sep), nil //nolint:nilerr // the fallback answers the error
+	}
+	return m, nil
+}
+
+// Contains reports whether the node or one of its descendants is of the type.
+func (node *Node) Contains(typ Type) bool {
+	if node.Type == typ {
+		return true
+	}
+	for _, c := range node.Children {
+		if c.Contains(typ) {
+			return true
+		}
+	}
+	return false
 }
 
 func (node *Node) Equal(n *Node) bool {
 	switch {
 	case node.Type != n.Type,
-		node.Value != n.Value,
+		!reflect.DeepEqual(node.Value, n.Value),
 		len(node.Children) != len(n.Children):
 		return false
 	}
@@ -167,7 +201,7 @@ func buildMatch(node *Node, sep []rune) (m Matcher, err error) {
 		if len(node.Children) == 0 {
 			return NewNothing(), nil
 		}
-		matchers, err := buildNodeMatch(node.Children, sep)
+		matchers, err := buildNodeMatch(squashStars(node.Children), sep)
 		if err != nil {
 			return nil, err
 		}
@@ -192,6 +226,10 @@ func buildMatch(node *Node, sep []rune) (m Matcher, err error) {
 	case Text:
 		t := node.Value.(TextData)
 		m = NewText(t.Text)
+	case Class:
+		m = NewClass(node.Value.(ClassData))
+	case Ext:
+		return nil, errors.New("could not compile tree: an extended group needs the backtracking matcher")
 	default:
 		return nil, fmt.Errorf("could not compile tree: unknown node type %s (%d)", node.Type, int(node.Type))
 	}
@@ -208,4 +246,23 @@ func buildNodeMatch(ns []*Node, sep []rune) ([]Matcher, error) {
 		matchers = append(matchers, m)
 	}
 	return matchers, nil
+}
+
+// squashStars returns the nodes with each run of stars as one star. A run
+// that holds a super star is a super star, because ** matches all that *
+// matches.
+func squashStars(nodes []*Node) []*Node {
+	out := make([]*Node, 0, len(nodes))
+	for _, n := range nodes {
+		if len(out) != 0 && (n.Type == Any || n.Type == Super) {
+			if last := out[len(out)-1]; last.Type == Any || last.Type == Super {
+				if n.Type == Super {
+					out[len(out)-1] = n
+				}
+				continue
+			}
+		}
+		out = append(out, n)
+	}
+	return out
 }

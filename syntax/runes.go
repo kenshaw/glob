@@ -7,6 +7,9 @@ import (
 )
 
 func runesHead(s string, r int) string {
+	if r <= 0 {
+		return ""
+	}
 	var i, m int
 	for i < len(s) {
 		_, n := utf8.DecodeRuneInString(s[i:])
@@ -179,6 +182,21 @@ func runesEqual(a, b []rune) bool {
 			}
 		}
 		return true
+	}
+	return false
+}
+
+// runesHasRunes reports whether s holds at least n runes.
+func runesHasRunes(s string, n int) bool {
+	if n <= 0 {
+		return true
+	}
+	var m int
+	for range s {
+		m++
+		if m >= n {
+			return true
+		}
 	}
 	return false
 }
