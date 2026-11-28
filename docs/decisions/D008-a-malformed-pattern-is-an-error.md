@@ -1,6 +1,6 @@
 # D8. A malformed pattern is an error
 
-Status: Proposed.
+Status: Decided.
 
 `Compile` returns an error for a pattern that is not complete:
 

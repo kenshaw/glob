@@ -1,6 +1,6 @@
 # D15. Quote escapes every special character, the comma too
 
-Status: Proposed.
+Status: Decided.
 
 `Quote` escapes `*`, `?`, `\`, `[`, `]`, `{`, `}`, `,`, `(`, `)` and `|`. A glob
 compiled from the result matches the input of `Quote` and nothing else, in

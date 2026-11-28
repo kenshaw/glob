@@ -17,10 +17,10 @@ A new decision gets the next number and a file of its own. Add its row here.
 question is not a decision. It goes at the end of [`../PLAN.md`](../PLAN.md)
 until the maintainers answer it.
 
-D1 to D6 record the fork and the layout of the repository. D7 to D19 were
-proposed on 2026-11-26 with the work that followed upstream and surveyed the
-syntax. D20 was proposed on the same day with the work on the time and the
-allocations of a match. They wait for the maintainers.
+D1 to D6 record the fork and the layout of the repository. D7 to D19 came
+with the work that followed upstream and surveyed the syntax, and D20 came
+with the work on the time and the allocations of a match. They were proposed
+on 2026-11-26, and the maintainers decided them on 2026-11-28.
 
 | # | Decision | Status |
 | --- | --- | --- |
@@ -30,17 +30,17 @@ allocations of a match. They wait for the maintainers.
 | D4 | [The documents name no maintainer](D004-the-documents-name-no-maintainer.md) | Decided |
 | D5 | [The module depends on the standard library alone](D005-the-module-depends-on-the-standard-library-alone.md) | Decided |
 | D6 | [The upstream checkout is in upstream/, with a base commit and a ledger](D006-the-upstream-checkout-is-in-upstream-with-a-base-commit-and-a-ledger.md) | Decided |
-| D7 | [The fork ports the behavior of upstream, not its engine](D007-the-fork-ports-the-behavior-of-upstream-not-its-engine.md) | Proposed |
-| D8 | [A malformed pattern is an error](D008-a-malformed-pattern-is-an-error.md) | Proposed |
-| D9 | [A bracket expression follows POSIX](D009-a-bracket-expression-follows-posix.md) | Proposed |
-| D10 | [Extended groups follow bash extglob, and are on by default](D010-extended-groups-follow-bash-extglob-and-are-on-by-default.md) | Proposed |
-| D11 | [A brace sequence follows bash](D011-a-brace-sequence-follows-bash.md) | Proposed |
-| D12 | [The backtracking matcher matches what the optimizer cannot, and is the reference of the tests](D012-the-backtracking-matcher-matches-what-the-optimizer-cannot-and-is-the-reference-of-the-tests.md) | Proposed. Amended by D20 |
-| D13 | [Options are functions, and Compile keeps its signature](D013-options-are-functions-and-compile-keeps-its-signature.md) | Proposed |
-| D14 | [Path and Host are globs with their own options](D014-path-and-host-are-globs-with-their-own-options.md) | Proposed |
-| D15 | [Quote escapes every special character, the comma too](D015-quote-escapes-every-special-character-the-comma-too.md) | Proposed |
-| D16 | [A `**` is a star that crosses separators, and globstar is an option](D016-a-is-a-star-that-crosses-separators-and-globstar-is-an-option.md) | Proposed |
-| D17 | [Case folding maps each rune to one rune of its case orbit](D017-case-folding-maps-each-rune-to-one-rune-of-its-case-orbit.md) | Proposed |
-| D18 | [The search of the optimizer has a budget](D018-the-search-of-the-optimizer-has-a-budget.md) | Proposed |
-| D19 | [The tests read vectors from the survey of glob syntax](D019-the-tests-read-vectors-from-the-survey-of-glob-syntax.md) | Proposed |
-| D20 | [A match takes linear time, and the NFA matcher replaces the backtracking matcher](D020-a-match-takes-linear-time-and-the-nfa-matcher-replaces-the-backtracking-matcher.md) | Proposed. Amends D12 |
+| D7 | [The fork ports the behavior of upstream, not its engine](D007-the-fork-ports-the-behavior-of-upstream-not-its-engine.md) | Decided |
+| D8 | [A malformed pattern is an error](D008-a-malformed-pattern-is-an-error.md) | Decided |
+| D9 | [A bracket expression follows POSIX](D009-a-bracket-expression-follows-posix.md) | Decided |
+| D10 | [Extended groups follow bash extglob, and are on by default](D010-extended-groups-follow-bash-extglob-and-are-on-by-default.md) | Decided |
+| D11 | [A brace sequence follows bash](D011-a-brace-sequence-follows-bash.md) | Decided |
+| D12 | [The backtracking matcher matches what the optimizer cannot, and is the reference of the tests](D012-the-backtracking-matcher-matches-what-the-optimizer-cannot-and-is-the-reference-of-the-tests.md) | Decided. Amended by D20 |
+| D13 | [Options are functions, and Compile keeps its signature](D013-options-are-functions-and-compile-keeps-its-signature.md) | Decided |
+| D14 | [Path and Host are globs with their own options](D014-path-and-host-are-globs-with-their-own-options.md) | Decided |
+| D15 | [Quote escapes every special character, the comma too](D015-quote-escapes-every-special-character-the-comma-too.md) | Decided |
+| D16 | [A `**` is a star that crosses separators, and globstar is an option](D016-a-is-a-star-that-crosses-separators-and-globstar-is-an-option.md) | Decided |
+| D17 | [Case folding maps each rune to one rune of its case orbit](D017-case-folding-maps-each-rune-to-one-rune-of-its-case-orbit.md) | Decided |
+| D18 | [The search of the optimizer has a budget](D018-the-search-of-the-optimizer-has-a-budget.md) | Decided |
+| D19 | [The tests read vectors from the survey of glob syntax](D019-the-tests-read-vectors-from-the-survey-of-glob-syntax.md) | Decided |
+| D20 | [A match takes linear time, and the NFA matcher replaces the backtracking matcher](D020-a-match-takes-linear-time-and-the-nfa-matcher-replaces-the-backtracking-matcher.md) | Decided. Amends D12 |

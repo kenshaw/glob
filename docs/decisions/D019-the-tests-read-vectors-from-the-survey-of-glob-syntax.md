@@ -1,6 +1,6 @@
 # D19. The tests read vectors from the survey of glob syntax
 
-Status: Proposed.
+Status: Decided.
 
 `docs/SYNTAX.md` is a survey of the glob syntax of the Go standard library,
 doublestar, bash, POSIX `fnmatch`, minimatch, picomatch, Python, Rust

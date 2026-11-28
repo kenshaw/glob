@@ -1,6 +1,6 @@
 # D20. A match takes linear time, and the NFA matcher replaces the backtracking matcher
 
-Status: Proposed. Amends D12.
+Status: Decided. Amends D12.
 
 On 2026-11-26, a search of random patterns found that a match could take time
 of the order of the length of the input to the power of the number of stars.

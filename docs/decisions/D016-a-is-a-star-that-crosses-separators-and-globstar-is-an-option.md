@@ -1,6 +1,6 @@
 # D16. A `**` is a star that crosses separators, and globstar is an option
 
-Status: Proposed.
+Status: Decided.
 
 A `**` matches any sequence of characters, separators included. It does not
 consume the separator next to it, so `a/**/b` with the separator `/` matches

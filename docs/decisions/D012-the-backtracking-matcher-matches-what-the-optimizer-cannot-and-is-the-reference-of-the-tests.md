@@ -1,6 +1,6 @@
 # D12. The backtracking matcher matches what the optimizer cannot, and is the reference of the tests
 
-Status: Proposed. Amended by D20.
+Status: Decided. Amended by D20.
 
 `syntax.BacktrackMatcher` matches a tree directly. It tries each way to split
 the input, and it remembers each answer for one call, so a call takes at most

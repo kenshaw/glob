@@ -1,6 +1,6 @@
 # D7. The fork ports the behavior of upstream, not its engine
 
-Status: Proposed.
+Status: Decided.
 
 In 2026-08, upstream replaced its matching engine with a new one, and released
 it as `v1.0.0`. The fork does not take the new engine. It keeps its own

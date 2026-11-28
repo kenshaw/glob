@@ -50,16 +50,14 @@ four things (D20):
 A maintainer asked for the minor release `v0.2.0` on 2026-11-26, which
 answers question 4. It holds both pieces of work.
 
+On 2026-11-28, the maintainers decided D7 to D20 as they were proposed. That
+answers questions 1, 2 and 3: the extended groups stay on by default, and
+`[^...]` stays a negation, in a minor version.
+
 ## Open questions
 
 The numbers do not repeat. The next question is question 7.
 
-1. D7 to D20 are proposed. Do the maintainers decide them as they are?
-2. Extended groups are on by default (D10). A pattern that held `@(` or `+(`
-   as text now holds a group. Is that change acceptable for a minor version,
-   or do the maintainers want an option that turns the groups on?
-3. `[^...]` is a negation now (D9), and before it matched `^`. Is that change
-   acceptable for a minor version?
 5. `notes.txt` in the root holds the two ideas that D10 and D14 answer. git
    does not track it. Can a maintainer delete it?
 6. A pattern whose tree of optimized matchers is not linear gets the NFA

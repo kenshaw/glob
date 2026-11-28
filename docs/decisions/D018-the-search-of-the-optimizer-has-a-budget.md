@@ -1,6 +1,6 @@
 # D18. The search of the optimizer has a budget
 
-Status: Proposed.
+Status: Decided.
 
 The optimizer tries every way to glue neighbors in a pattern, such as `*` and
 `?` into one matcher. The cost of that search grows exponentially with the

@@ -1,6 +1,6 @@
 # D17. Case folding maps each rune to one rune of its case orbit
 
-Status: Proposed.
+Status: Decided.
 
 `WithFold` matches as `strings.EqualFold` compares. The compiler maps each
 rune of the text of the pattern, and of the separators, to one rune of its

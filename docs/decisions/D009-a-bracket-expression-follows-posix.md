@@ -1,6 +1,6 @@
 # D9. A bracket expression follows POSIX
 
-Status: Proposed.
+Status: Decided.
 
 A bracket expression, such as `[a-z0-9_]`, follows POSIX and the shells:
 

@@ -1,6 +1,6 @@
 # D10. Extended groups follow bash extglob, and are on by default
 
-Status: Proposed.
+Status: Decided.
 
 The pattern syntax holds the five extended groups of bash and ksh:
 `?(a|b)`, `*(a|b)`, `+(a|b)`, `@(a|b)` and `!(a|b)`. Issue 3 of upstream asks

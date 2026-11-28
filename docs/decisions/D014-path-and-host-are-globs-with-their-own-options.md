@@ -1,6 +1,6 @@
 # D14. Path and Host are globs with their own options
 
-Status: Proposed.
+Status: Decided.
 
 `notes.txt` of the maintainers asks for a type for paths and a type for host
 names. The types embed `Glob`, so a struct field of either type unmarshals

@@ -1,6 +1,6 @@
 # D13. Options are functions, and Compile keeps its signature
 
-Status: Proposed.
+Status: Decided.
 
 `Compile(pattern, separators...)` keeps its signature, so no caller changes.
 `CompileWith(pattern, opts...)` takes options:

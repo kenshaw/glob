@@ -1,6 +1,6 @@
 # D11. A brace sequence follows bash
 
-Status: Proposed.
+Status: Decided.
 
 `{lo..hi}` and `{lo..hi..step}` are sequences, as in bash: `{1..10}`,
 `{01..10..2}`, `{-2..2}`, `{a..e}` and `{z..a..2}`.
