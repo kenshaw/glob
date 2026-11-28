@@ -54,15 +54,14 @@ On 2026-11-28, the maintainers decided D7 to D20 as they were proposed. That
 answers questions 1, 2 and 3: the extended groups stay on by default, and
 `[^...]` stays a negation, in a minor version.
 
+On the same day, a maintainer answered questions 5 and 6. `notes.txt` is
+deleted, because D10 and D14 hold its two ideas. The cost of the NFA matcher
+on a short input is accepted, and there is no option that keeps the
+optimized matchers for trusted input. Item 10 of `BACKLOG.md` can win the
+time back.
+
 ## Open questions
 
 The numbers do not repeat. The next question is question 7.
 
-5. `notes.txt` in the root holds the two ideas that D10 and D14 answer. git
-   does not track it. Can a maintainer delete it?
-6. A pattern whose tree of optimized matchers is not linear gets the NFA
-   matcher (D20). It is safe on any input, but it can take about twice the
-   time on a short input. The benchmark pattern
-   `[a-z][!a-x]*cat*[h][!b]*eyes*` takes 180 ns in place of 90 ns. Is that
-   cost acceptable, or do the maintainers want an option that keeps the
-   optimized matchers for trusted input?
+There is no open question now.
